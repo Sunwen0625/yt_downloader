@@ -10,7 +10,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _urlController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   bool _hasSearched = false;
+  bool _isLoadingMore = false;
 
   // 模擬解析後的數據
   final List<Map<String, String>> _mockVideos = List.generate(
@@ -21,6 +23,46 @@ class _HomeScreenState extends State<HomeScreen> {
       "thumbnailUrl": "https://picsum.photos/200/120?random=$index",
     },
   );
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMore &&
+        _hasSearched) {
+      _fetchMoreVideos();
+    }
+  }
+
+  Future<void> _fetchMoreVideos() async {
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    // 模擬網路延遲
+    await Future.delayed(const Duration(seconds: 2));
+
+    final int currentLength = _mockVideos.length;
+    final List<Map<String, String>> newVideos = List.generate(
+      10,
+      (index) => {
+        "title": "解析到的影片 #${currentLength + index + 1} - 新載入的影片",
+        "duration": "${index + 5}:12",
+        "thumbnailUrl": "https://picsum.photos/200/120?random=${currentLength + index}",
+      },
+    );
+
+    if (mounted) {
+      setState(() {
+        _mockVideos.addAll(newVideos);
+        _isLoadingMore = false;
+      });
+    }
+  }
 
   void _handleSearch() {
     if (_urlController.text.isNotEmpty) {
@@ -125,20 +167,26 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Expanded(
               child: ListView.builder(
-                itemCount: _mockVideos.length,
+                controller: _scrollController,
+                itemCount: _mockVideos.length + (_isLoadingMore ? 3 : 0),
                 itemExtent: itemHeight,
                 itemBuilder: (context, index) {
-                  final video = _mockVideos[index];
-                  return ListItem(
-                    title: video["title"]!,
-                    duration: video["duration"]!,
-                    thumbnailUrl: video["thumbnailUrl"]!,
-                    onDownload: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('正在下載: ${video["title"]}')),
-                      );
-                    },
-                  );
+                  if (index < _mockVideos.length) {
+                    final video = _mockVideos[index];
+                    return ListItem(
+                      title: video["title"]!,
+                      duration: video["duration"]!,
+                      thumbnailUrl: video["thumbnailUrl"]!,
+                      onDownload: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('正在下載: ${video["title"]}')),
+                        );
+                      },
+                    );
+                  } else {
+                    // 顯示加載中的佔位符
+                    return const ListItem(isLoading: true);
+                  }
                 },
               ),
             ),
@@ -151,6 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _urlController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 }

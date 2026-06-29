@@ -21,6 +21,7 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'YT Downloader',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
         useMaterial3: true,

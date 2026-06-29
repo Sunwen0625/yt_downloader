@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     // 模擬網路延遲
-    await Future.delayed(const Duration(seconds: 2));
+    //await Future.delayed(const Duration(seconds: 2));
 
     final int currentLength = _mockVideos.length;
     final List<Map<String, String>> newVideos = List.generate(

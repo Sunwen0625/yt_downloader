@@ -12,7 +12,7 @@ void main() async {
 
     WindowOptions windowOptions = const WindowOptions(
       size: Size(1200, 800), // 初始化大小
-      minimumSize: Size(350, 600), // 最小大小，防止 UI 崩壞
+      minimumSize: Size(700, 600), // 最小大小，防止 UI 崩壞
       center: true,
       backgroundColor: Colors.transparent,
       skipTaskbar: false,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/list_item.dart';
+import '../services/youtube_api.dart';
+import '../widgets/video_item.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,69 +11,32 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _urlController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+  
+  List<dynamic> _videos = [];
   bool _hasSearched = false;
-  bool _isLoadingMore = false;
+  bool _isLoading = false;
+  final Set<String> _downloadingIds = {};
 
-  // 模擬解析後的數據
-  final List<Map<String, String>> _mockVideos = List.generate(
-    10,
-    (index) => {
-      "title": "解析到的影片 #${index + 1} - 這裡是一個比較長的標題測試",
-      "duration": "${index + 3}:45",
-      "thumbnailUrl": "https://picsum.photos/200/120?random=$index",
-    },
-  );
+  Future<void> _handleSearch() async {
+    if (_urlController.text.isEmpty) return;
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
+    setState(() => _isLoading = true);
 
-  void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 &&
-        !_isLoadingMore &&
-        _hasSearched) {
-      _fetchMoreVideos();
-    }
-  }
+    try {
+      final data = await YoutubeApi.getPlaylist(_urlController.text);
 
-  Future<void> _fetchMoreVideos() async {
-    setState(() {
-      _isLoadingMore = true;
-    });
-
-    // 模擬網路延遲
-    //await Future.delayed(const Duration(seconds: 2));
-
-    final int currentLength = _mockVideos.length;
-    final List<Map<String, String>> newVideos = List.generate(
-      10,
-      (index) => {
-        "title": "解析到的影片 #${currentLength + index + 1} - 新載入的影片",
-        "duration": "${index + 5}:12",
-        "thumbnailUrl": "https://picsum.photos/200/120?random=${currentLength + index}",
-      },
-    );
-
-    if (mounted) {
       setState(() {
-        _mockVideos.addAll(newVideos);
-        _isLoadingMore = false;
-      });
-    }
-  }
-
-  void _handleSearch() {
-    if (_urlController.text.isNotEmpty) {
-      setState(() {
+        _videos = data["videos"];
         _hasSearched = true;
       });
-    } else {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('請輸入有效的 YouTube 網址')),
+        const SnackBar(content: Text("解析失敗，請檢查網址是否正確")),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -92,13 +56,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   setState(() {
                     _hasSearched = false;
                     _urlController.clear();
+                    _videos = [];
                   });
                 },
               )
             ]
           : null,
       ),
-      body: _hasSearched ? _buildResultsView() : _buildInputView(),
+      body: _isLoading 
+          ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
+          : _hasSearched ? _buildResultsView() : _buildInputView(),
     );
   }
 
@@ -142,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildResultsView() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 動態計算高度，確保畫面顯示 5 個
+        // 動態計算高度，確保畫面顯示約 5 個
         double itemHeight = (constraints.maxHeight / 5).clamp(100.0, 150.0);
 
         return Column(
@@ -167,26 +134,51 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Expanded(
               child: ListView.builder(
-                controller: _scrollController,
-                itemCount: _mockVideos.length + (_isLoadingMore ? 3 : 0),
+                itemCount: _videos.length,
                 itemExtent: itemHeight,
                 itemBuilder: (context, index) {
-                  if (index < _mockVideos.length) {
-                    final video = _mockVideos[index];
-                    return ListItem(
-                      title: video["title"]!,
-                      duration: video["duration"]!,
-                      thumbnailUrl: video["thumbnailUrl"]!,
-                      onDownload: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('正在下載: ${video["title"]}')),
+                  final video = _videos[index];
+                  final String videoId = video["id"] ?? "";
+                  
+                  return VideoItem(
+                    title: video["title"] ?? "無標題",
+                    duration: video["duration"] ?? "00:00",
+                    thumbnailUrl: video["thumbnailUrl"] ?? "",
+                    isDownloading: _downloadingIds.contains(videoId),
+                    downloadProgress: _downloadingIds.contains(videoId) ? 0.7 : 0.0, // 模擬進度
+                    onDownload: (format, quality) async {
+                      if (videoId.isEmpty) return;
+
+                      setState(() => _downloadingIds.add(videoId));
+
+                      try {
+                        final success = await YoutubeApi.download(
+                          videoId,
+                          format,
+                          quality,
                         );
-                      },
-                    );
-                  } else {
-                    // 顯示加載中的佔位符
-                    return const ListItem(isLoading: true);
-                  }
+
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(success ? "下載成功：${video["title"]}" : "下載失敗"),
+                              backgroundColor: success ? Colors.green : Colors.redAccent,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("下載發生錯誤"), backgroundColor: Colors.redAccent),
+                          );
+                        }
+                      } finally {
+                        if (mounted) {
+                          setState(() => _downloadingIds.remove(videoId));
+                        }
+                      }
+                    },
+                  );
                 },
               ),
             ),
@@ -199,7 +191,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _urlController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 }

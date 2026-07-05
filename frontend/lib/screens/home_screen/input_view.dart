@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class HomeInputView extends StatelessWidget {
   final TextEditingController controller;
@@ -9,6 +10,7 @@ class HomeInputView extends StatelessWidget {
     required this.controller,
     required this.onSearch,
   });
+
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +26,21 @@ class HomeInputView extends StatelessWidget {
             decoration: InputDecoration(
               hintText: '貼上 YouTube 影片或播放清單網址',
               prefixIcon: const Icon(Icons.link),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.content_paste),
+                tooltip: '貼上網址',
+                onPressed: () async {
+                  final data = await Clipboard.getData(Clipboard.kTextPlain);
+                  if (data != null && data.text != null) {
+                    controller.text = data.text!;
+                  }
+                },
+              ),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: Colors.grey[100],
             ),
+            textInputAction: TextInputAction.go,
             onSubmitted: (_) => onSearch(),
           ),
           const SizedBox(height: 20),

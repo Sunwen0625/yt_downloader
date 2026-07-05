@@ -1,7 +1,7 @@
 import urllib.parse
 import yt_dlp
 
-from models.file_type import PlaylistInfo, PlaylistVideo
+from models.file_type import PlaylistInfo, PlaylistVideo, format_duration
 
 
 def _normalize_playlist_url(url: str) -> str:
@@ -28,34 +28,36 @@ def get_playlist(url: str) -> PlaylistInfo:
 
     if 'entries' not in info:
         return PlaylistInfo(
-            playlist_id=info.get('id', ''),
-            playlist_title=info.get('title', 'Single Video'),
+            playlist_id=info.get('id') or '',
+            playlist_title=info.get('title') or 'Single Video',
             videos=[
                 PlaylistVideo(
-                    id=info.get('id', ''),
-                    title=info.get('title', 'Unknown'),
-                    duration=info.get('duration', 0),
-                    thumbnail=info.get('thumbnail', ''),
-                    url=info.get('webpage_url', url),
+                    id=info.get('id') or '',
+                    title=info.get('title') or 'Unknown',
+                    duration=format_duration(info.get('duration')),
+                    thumbnail=info.get('thumbnail') or '',
+                    url=info.get('webpage_url') or url,
                 )
             ],
         )
 
-    playlist_id = info.get('id', '')
-    playlist_title = info.get('title', 'Untitled')
+    playlist_id = info.get('id') or ''
+    playlist_title = info.get('title') or 'Untitled'
 
     videos = []
     for entry in info.get('entries', []):
         if entry is None:
             continue
-        video_id = entry.get('id', '')
+        video_id = entry.get('id') or ''
+        if not video_id:
+            continue
         videos.append(
             PlaylistVideo(
                 id=video_id,
-                title=entry.get('title', 'Unknown'),
-                duration=entry.get('duration', 0),
-                thumbnail=entry.get('thumbnail', f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"),
-                url=entry.get('url', f'https://youtube.com/watch?v={video_id}'),
+                title=entry.get('title') or '[Unavailable Video]',
+                duration=format_duration(entry.get('duration')),
+                thumbnail=entry.get('thumbnail') or f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
+                url=entry.get('url') or f'https://youtube.com/watch?v={video_id}',
             )
         )
 

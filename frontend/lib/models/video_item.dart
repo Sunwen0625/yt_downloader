@@ -3,11 +3,11 @@ class VideoItem {
   final String title;
   final String thumbnail;
   final String duration;
+  final String url;
 
   List<String> formats;
   List<String> qualities;
 
-  bool metadataLoaded;
 
   String selectedFormat;
   String selectedQuality;
@@ -17,10 +17,10 @@ class VideoItem {
     required this.title,
     required this.thumbnail,
     required this.duration,
-    this.formats = const [],
-    this.qualities = const [],
-    this.metadataLoaded = false,
-    this.selectedFormat = "mp4",
-    this.selectedQuality = "720p",
+    this.url = '',
+    this.formats = const ['mp3', 'mp4'],
+    this.qualities = const ['1080p', '720p', '480p'],
+    this.selectedFormat = 'mp4',
+    this.selectedQuality = '720p',
   });
 }

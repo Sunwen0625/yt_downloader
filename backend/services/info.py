@@ -1,6 +1,6 @@
 import yt_dlp
 
-from models.file_type import VideoInfo, FormatInfo
+from models.file_type import VideoInfo, FormatInfo, format_duration
 
 
 def get_video_info(url: str) -> VideoInfo:
@@ -51,7 +51,7 @@ def get_video_info(url: str) -> VideoInfo:
     return VideoInfo(
         id=info.get('id', ''),
         title=info.get('title', ''),
-        duration=info.get('duration', 0),
+        duration=format_duration(info.get('duration')),
         thumbnail=info.get('thumbnail', ''),
         description=info.get('description', ''),
         uploader=info.get('uploader', ''),

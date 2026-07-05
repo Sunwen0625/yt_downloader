@@ -2,6 +2,15 @@ from pydantic import BaseModel
 from typing import Optional
 
 
+def format_duration(seconds) -> str:
+    seconds = int(seconds or 0)
+    hours, remainder = divmod(seconds, 3600)
+    minutes, secs = divmod(remainder, 60)
+    if hours:
+        return f'{hours:02d}:{minutes:02d}:{secs:02d}'
+    return f'{minutes:02d}:{secs:02d}'
+
+
 class FormatInfo(BaseModel):
     format_id: str
     ext: str
@@ -17,7 +26,7 @@ class FormatInfo(BaseModel):
 class VideoInfo(BaseModel):
     id: str
     title: str
-    duration: int
+    duration: str
     thumbnail: str
     description: Optional[str] = None
     uploader: Optional[str] = None
@@ -30,7 +39,7 @@ class VideoInfo(BaseModel):
 class PlaylistVideo(BaseModel):
     id: str
     title: str
-    duration: int
+    duration: str
     thumbnail: str
     url: str
 

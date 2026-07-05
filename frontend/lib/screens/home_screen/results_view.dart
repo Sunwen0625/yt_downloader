@@ -5,14 +5,14 @@ import '../../widgets/video_item.dart' as widget;
 class HomeResultsView extends StatelessWidget {
   final String url;
   final List<VideoItem> videos;
-  final Set<String> downloadingIds;
+  final Map<String, double> downloadingProgress;
   final Function(VideoItem video, String format, String quality) onDownload;
 
   const HomeResultsView({
     super.key,
     required this.url,
     required this.videos,
-    required this.downloadingIds,
+    required this.downloadingProgress,
     required this.onDownload,
   });
 
@@ -50,11 +50,12 @@ class HomeResultsView extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final video = videos[index];
                   final String videoId = video.videoId;
+                  final double? progress = downloadingProgress[videoId];
                   
                   return widget.VideoItem(
                     video: video,
-                    isDownloading: downloadingIds.contains(videoId),
-                    downloadProgress: downloadingIds.contains(videoId) ? 0.7 : 0.0, // 模擬進度
+                    isDownloading: progress != null,
+                    downloadProgress: progress ?? 0.0,
                     onDownload: (format, quality) => onDownload(video, format, quality),
                   );
                 },

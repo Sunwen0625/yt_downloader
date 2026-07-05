@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException, Query
+import os
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from services.playlist import get_playlist
 from services.info import get_video_info
-from services.download import stream_download
+from services.download import stream_download, download_video, download_mp3
+from services.settings import load_settings, save_settings, Settings
 
 app = FastAPI(title='YT Downloader API')
 
@@ -47,6 +49,47 @@ def video_download(
         raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post('/video/download')
+async def video_download_post(request: Request):
+    try:
+        body = await request.json()
+        video_id = body['video_id']
+        fmt = body.get('format', 'mp4')
+        quality = body.get('quality', '720p')
+
+        url = f'https://youtube.com/watch?v={video_id}'
+        settings = load_settings()
+        output_dir = settings.download_path
+        os.makedirs(output_dir, exist_ok=True)
+
+        if fmt == 'mp3':
+            filename = download_mp3(url, output_dir)
+        else:
+            filename = download_video(url, fmt, quality, output_dir)
+
+        return {'success': True, 'filename': filename}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get('/settings')
+def get_settings():
+    s = load_settings()
+    return {'download_path': s.download_path}
+
+
+@app.put('/settings')
+def update_settings(data: dict):
+    download_path = data.get('download_path', '')
+    if not download_path:
+        raise HTTPException(status_code=400, detail='download_path is required')
+    os.makedirs(download_path, exist_ok=True)
+    save_settings(Settings(download_path=download_path))
+    return {'success': True, 'download_path': download_path}
 
 
 if __name__ == '__main__':

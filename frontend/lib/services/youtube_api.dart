@@ -16,21 +16,9 @@ class YoutubeApi {
     return jsonDecode(res.body);
   }
 
-  static Future<Map<String, dynamic>> getMetadata(String videoId) async {
-    final res = await http.get(
-      Uri.parse("$baseUrl/video/$videoId/metadata"),
-    );
-
-    if (res.statusCode != 200) {
-      throw Exception("Metadata fetch error");
-    }
-
-    return jsonDecode(res.body);
-  }
-
-  static Future<bool> download(String videoId, String format, String quality) async {
+  static Future<String?> download(String videoId, String format, String quality) async {
     final res = await http.post(
-      Uri.parse("$baseUrl/download"),
+      Uri.parse("$baseUrl/video/download"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "video_id": videoId,
@@ -40,10 +28,27 @@ class YoutubeApi {
     );
 
     if (res.statusCode != 200) {
-      return false;
+      return null;
     }
 
     final data = jsonDecode(res.body);
-    return data["success"] ?? false;
+    return data["success"] == true ? data["filename"] : null;
+  }
+
+  static Future<Map<String, dynamic>> getSettings() async {
+    final res = await http.get(Uri.parse("$baseUrl/settings"));
+    if (res.statusCode != 200) {
+      throw Exception("Failed to fetch settings");
+    }
+    return jsonDecode(res.body);
+  }
+
+  static Future<bool> updateSettings(String downloadPath) async {
+    final res = await http.put(
+      Uri.parse("$baseUrl/settings"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"download_path": downloadPath}),
+    );
+    return res.statusCode == 200;
   }
 }

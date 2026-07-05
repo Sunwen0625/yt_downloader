@@ -83,16 +83,37 @@ class _VideoItemState extends State<VideoItem> {
                   ),
                   const SizedBox(height: 8),
                   if (widget.isDownloading) ...[
-                    LinearProgressIndicator(
-                      value: widget.downloadProgress,
-                      backgroundColor: Colors.grey[200],
-                      color: Colors.redAccent,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "${(widget.downloadProgress * 100).toStringAsFixed(0)}%",
-                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                    Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.asset(
+                            'assets/Hoshina.gif',
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              LinearProgressIndicator(
+                                value: widget.downloadProgress,
+                                backgroundColor: Colors.grey[200],
+                                color: Colors.redAccent,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "${(widget.downloadProgress * 100).toStringAsFixed(0)}%",
+                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ] else
                     Row(
@@ -102,12 +123,14 @@ class _VideoItemState extends State<VideoItem> {
                           items: widget.video.formats.isEmpty ? ["mp4"] : widget.video.formats,
                           onChanged: (val) => setState(() => widget.video.selectedFormat = val!),
                         ),
-                        const SizedBox(width: 8),
-                        _buildDropdown(
-                          value: widget.video.selectedQuality,
-                          items: widget.video.qualities.isEmpty ? ["720p"] : widget.video.qualities,
-                          onChanged: (val) => setState(() => widget.video.selectedQuality = val!),
-                        ),
+                        if (widget.video.selectedFormat == 'mp4') ...[
+                          const SizedBox(width: 8),
+                          _buildDropdown(
+                            value: widget.video.selectedQuality,
+                            items: widget.video.qualities.isEmpty ? ["720p"] : widget.video.qualities,
+                            onChanged: (val) => setState(() => widget.video.selectedQuality = val!),
+                          ),
+                        ],
                         const Spacer(),
                         IconButton(
                           onPressed: () => widget.onDownload(

@@ -17,7 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<model.VideoItem> _videos = [];
   bool _hasSearched = false;
   bool _isLoading = false;
-  final Set<String> _downloadingIds = {};
+  final Map<String, double> _downloadingProgress = {};
 
   Future<void> _handleSearch() async {
     if (_urlController.text.isEmpty) return;
@@ -33,8 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
           title: v["title"]?.toString() ?? "無標題",
           thumbnail: v["thumbnail"]?.toString() ?? "",
           duration: v["duration"]?.toString() ?? "00:00",
-          formats: ["mp4", "mkv", "webm"], // 預設值，之後可從 API 取得
-          qualities: ["1080p", "720p", "480p"],
+          url: v["url"]?.toString() ?? "",
         )).toList();
         _hasSearched = true;
       });
@@ -54,20 +53,30 @@ class _HomeScreenState extends State<HomeScreen> {
     final String videoId = video.videoId;
     if (videoId.isEmpty) return;
 
-    setState(() => _downloadingIds.add(videoId));
+    setState(() => _downloadingProgress[videoId] = 0.0);
+
+    // 模擬進度增加
+    final progressTimer = Stream.periodic(const Duration(milliseconds: 500), (count) {
+      return (count + 1) * 0.05;
+    }).takeWhile((p) => p <= 0.9).listen((p) {
+      if (mounted && _downloadingProgress.containsKey(videoId)) {
+        setState(() => _downloadingProgress[videoId] = p);
+      }
+    });
 
     try {
-      final success = await YoutubeApi.download(
+      final filename = await YoutubeApi.download(
         videoId,
         format,
         quality,
       );
 
       if (mounted) {
+        setState(() => _downloadingProgress[videoId] = 1.0);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success ? "下載成功：${video.title}" : "下載失敗"),
-            backgroundColor: success ? Colors.green : Colors.redAccent,
+            content: Text(filename != null ? "下載成功：$filename" : "下載失敗"),
+            backgroundColor: filename != null ? Colors.green : Colors.redAccent,
           ),
         );
       }
@@ -78,8 +87,13 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } finally {
+      progressTimer.cancel();
       if (mounted) {
-        setState(() => _downloadingIds.remove(videoId));
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            setState(() => _downloadingProgress.remove(videoId));
+          }
+        });
       }
     }
   }
@@ -113,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ? HomeResultsView(
                   url: _urlController.text,
                   videos: _videos,
-                  downloadingIds: _downloadingIds,
+                  downloadingProgress: _downloadingProgress,
                   onDownload: _handleDownload,
                 ) 
               : HomeInputView(

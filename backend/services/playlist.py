@@ -56,7 +56,7 @@ def get_playlist(url: str) -> PlaylistInfo:
                 id=video_id,
                 title=entry.get('title') or '[Unavailable Video]',
                 duration=format_duration(entry.get('duration')),
-                thumbnail=entry.get('thumbnail') or f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
+                thumbnail=entry.get('thumbnail') or f"https://img.youtube.com/vi/{video_id}/default.jpg",
                 url=entry.get('url') or f'https://youtube.com/watch?v={video_id}',
             )
         )

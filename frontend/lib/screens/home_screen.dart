@@ -72,7 +72,10 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
       if (mounted) {
-        setState(() => _downloadingProgress[videoId] = 1.0);
+        setState(() {
+          _downloadingProgress[videoId] = 1.0;
+          video.isDownloaded = true;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(filename != null ? "下載成功：$filename" : "下載失敗"),

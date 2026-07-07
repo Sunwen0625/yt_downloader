@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
+import 'theme/app_theme.dart';
+import 'services/youtube_api.dart';
 
 class YTDownloaderApp extends StatefulWidget {
   const YTDownloaderApp({super.key});
@@ -11,25 +13,50 @@ class YTDownloaderApp extends StatefulWidget {
 
 class _YTDownloaderAppState extends State<YTDownloaderApp> {
   int _currentIndex = 0;
-  
-  final List<Widget> _pages = [
-    const HomeScreen(),
-    const SettingsScreen(),
-  ];
+  ThemeMode _themeMode = ThemeMode.light;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    try {
+      final data = await YoutubeApi.getSettings();
+      final isDark = data['dark_mode'] == true;
+      if (mounted) {
+        setState(() {
+          _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _onToggleTheme(bool isDark) {
+    setState(() {
+      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'YT Downloader',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: _themeMode,
       home: Scaffold(
         body: IndexedStack(
           index: _currentIndex,
-          children: _pages,
+          children: [
+            const HomeScreen(),
+            SettingsScreen(
+              isDarkMode: _themeMode == ThemeMode.dark,
+              onToggle: _onToggleTheme,
+            ),
+          ],
         ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,

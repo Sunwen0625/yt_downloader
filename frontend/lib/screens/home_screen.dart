@@ -55,7 +55,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setState(() => _downloadingProgress[videoId] = 0.0);
 
-    // 模擬進度增加
     final progressTimer = Stream.periodic(const Duration(milliseconds: 500), (count) {
       return (count + 1) * 0.05;
     }).takeWhile((p) => p <= 0.9).listen((p) {
@@ -76,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _downloadingProgress[videoId] = 1.0;
           video.isDownloaded = true;
         });
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(filename != null ? "下載成功：$filename" : "下載失敗"),
@@ -103,12 +103,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('YouTube 下載器'),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
         actions: _hasSearched 
           ? [
               IconButton(
@@ -125,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
           : null,
       ),
       body: _isLoading 
-          ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
+          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
           : _hasSearched 
               ? HomeResultsView(
                   url: _urlController.text,

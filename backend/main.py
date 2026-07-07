@@ -79,7 +79,10 @@ async def video_download_post(request: Request):
 @app.get('/settings')
 def get_settings():
     s = load_settings()
-    return {'download_path': s.download_path}
+    return {
+        'download_path': s.download_path,
+        'dark_mode': s.dark_mode,
+    }
 
 
 @app.put('/settings')
@@ -88,8 +91,9 @@ def update_settings(data: dict):
     if not download_path:
         raise HTTPException(status_code=400, detail='download_path is required')
     os.makedirs(download_path, exist_ok=True)
-    save_settings(Settings(download_path=download_path))
-    return {'success': True, 'download_path': download_path}
+    dark_mode = data.get('dark_mode', False)
+    save_settings(Settings(download_path=download_path, dark_mode=dark_mode))
+    return {'success': True, 'download_path': download_path, 'dark_mode': dark_mode}
 
 
 if __name__ == '__main__':

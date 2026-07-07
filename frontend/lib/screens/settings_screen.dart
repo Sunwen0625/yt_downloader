@@ -3,7 +3,14 @@ import 'package:file_picker/file_picker.dart';
 import '../services/youtube_api.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final bool isDarkMode;
+  final ValueChanged<bool> onToggle;
+
+  const SettingsScreen({
+    super.key,
+    required this.isDarkMode,
+    required this.onToggle,
+  });
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -44,7 +51,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       debugPrint('Picker result: $result');
 
       if (result != null && result.isNotEmpty) {
-        final success = await YoutubeApi.updateSettings(result);
+        final success = await YoutubeApi.updateSettings(
+          result,
+          darkMode: widget.isDarkMode,
+        );
         if (mounted) {
           if (success) {
             setState(() => _downloadPath = result);
@@ -68,8 +78,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _toggleDarkMode(bool value) async {
+    widget.onToggle(value);
+    if (_downloadPath.isNotEmpty) {
+      await YoutubeApi.updateSettings(
+        _downloadPath,
+        darkMode: value,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
       body: _isLoading
@@ -81,6 +103,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: const Text('下載路徑'),
                   subtitle: Text(_downloadPath.isNotEmpty ? _downloadPath : '尚未設定'),
                   onTap: _editDownloadPath,
+                ),
+                const Divider(),
+                ListTile(
+                  leading: Icon(
+                    widget.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                    color: colorScheme.primary,
+                  ),
+                  title: const Text('黑夜模式'),
+                  trailing: Switch(
+                    value: widget.isDarkMode,
+                    onChanged: _toggleDarkMode,
+                  ),
                 ),
                 const Divider(),
                 ListTile(

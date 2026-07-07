@@ -18,26 +18,27 @@ class HomeResultsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 動態計算高度，確保畫面顯示約 5 個
         double itemHeight = (constraints.maxHeight / 5).clamp(100.0, 150.0);
 
         return Column(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              color: Colors.grey[50],
+              color: colorScheme.surfaceContainerHighest,
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                  Icon(Icons.check_circle, color: colorScheme.tertiary, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       '已解析: $url',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ],

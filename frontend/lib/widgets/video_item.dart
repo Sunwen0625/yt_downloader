@@ -22,16 +22,17 @@ class VideoItem extends StatefulWidget {
 class _VideoItemState extends State<VideoItem> {
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final bool isDownloaded = widget.video.isDownloaded;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: isDownloaded ? 0 : 2,
-      color: isDownloaded ? Colors.green.withOpacity(0.05) : Colors.white,
+      color: isDownloaded ? colorScheme.primaryContainer.withOpacity(0.3) : colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isDownloaded ? Colors.green.withOpacity(0.2) : Colors.transparent,
+          color: isDownloaded ? colorScheme.primaryContainer : Colors.transparent,
           width: 1,
         ),
       ),
@@ -40,7 +41,6 @@ class _VideoItemState extends State<VideoItem> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 縮圖
             Stack(
               children: [
                 Opacity(
@@ -55,8 +55,8 @@ class _VideoItemState extends State<VideoItem> {
                       errorBuilder: (context, error, stackTrace) => Container(
                         width: 140,
                         height: 80,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.video_library, color: Colors.grey),
+                        color: colorScheme.surfaceContainerHighest,
+                        child: Icon(Icons.video_library, color: colorScheme.onSurfaceVariant),
                       ),
                     ),
                   ),
@@ -89,7 +89,6 @@ class _VideoItemState extends State<VideoItem> {
               ],
             ),
             const SizedBox(width: 16),
-            // 影片資訊
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +100,7 @@ class _VideoItemState extends State<VideoItem> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: isDownloaded ? Colors.grey : Colors.black,
+                      color: isDownloaded ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -110,11 +109,14 @@ class _VideoItemState extends State<VideoItem> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(6),
-                          child: Image.asset(
-                            'assets/Hoshina.gif',
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
+                          child: Container(
+                            color: Colors.white,
+                            child: Image.asset(
+                              'assets/Hoshina.gif',
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -124,14 +126,14 @@ class _VideoItemState extends State<VideoItem> {
                             children: [
                               LinearProgressIndicator(
                                 value: widget.downloadProgress,
-                                backgroundColor: Colors.grey[200],
-                                color: Colors.redAccent,
+                                backgroundColor: colorScheme.surfaceContainerHighest,
+                                color: colorScheme.primary,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 "${(widget.downloadProgress * 100).toStringAsFixed(0)}%",
-                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                style: TextStyle(fontSize: 10, color: colorScheme.onSurfaceVariant),
                               ),
                             ],
                           ),
@@ -155,7 +157,7 @@ class _VideoItemState extends State<VideoItem> {
                           ),
                           icon: const Icon(Icons.replay, size: 16),
                           label: const Text("重新下載", style: TextStyle(fontSize: 12)),
-                          style: TextButton.styleFrom(foregroundColor: Colors.grey),
+                          style: TextButton.styleFrom(foregroundColor: colorScheme.onSurfaceVariant),
                         ),
                       ],
                     )
@@ -181,9 +183,9 @@ class _VideoItemState extends State<VideoItem> {
                             widget.video.selectedFormat,
                             widget.video.selectedQuality,
                           ),
-                          icon: const Icon(Icons.download, color: Colors.redAccent),
+                          icon: Icon(Icons.download, color: colorScheme.primary),
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.redAccent.withOpacity(0.1),
+                            backgroundColor: colorScheme.primary.withOpacity(0.1),
                           ),
                         ),
                       ],
@@ -202,17 +204,19 @@ class _VideoItemState extends State<VideoItem> {
     required List<String> items,
     required ValueChanged<String?> onChanged,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isDense: true,
-          style: const TextStyle(fontSize: 12, color: Colors.black87),
+          style: TextStyle(fontSize: 12, color: colorScheme.onSurface),
           items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
           onChanged: onChanged,
         ),

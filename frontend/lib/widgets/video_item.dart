@@ -22,10 +22,19 @@ class VideoItem extends StatefulWidget {
 class _VideoItemState extends State<VideoItem> {
   @override
   Widget build(BuildContext context) {
+    final bool isDownloaded = widget.video.isDownloaded;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: isDownloaded ? 0 : 2,
+      color: isDownloaded ? Colors.green.withOpacity(0.05) : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDownloaded ? Colors.green.withOpacity(0.2) : Colors.transparent,
+          width: 1,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
@@ -34,21 +43,34 @@ class _VideoItemState extends State<VideoItem> {
             // 縮圖
             Stack(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    widget.video.thumbnail,
-                    width: 140,
-                    height: 80,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
+                Opacity(
+                  opacity: isDownloaded ? 0.7 : 1.0,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      widget.video.thumbnail,
                       width: 140,
                       height: 80,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.video_library, color: Colors.grey),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 140,
+                        height: 80,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.video_library, color: Colors.grey),
+                      ),
                     ),
                   ),
                 ),
+                if (isDownloaded)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.check_circle, color: Colors.green, size: 32),
+                    ),
+                  ),
                 Positioned(
                   bottom: 4,
                   right: 4,
@@ -76,9 +98,10 @@ class _VideoItemState extends State<VideoItem> {
                     widget.video.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
+                      color: isDownloaded ? Colors.grey : Colors.black,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -115,7 +138,28 @@ class _VideoItemState extends State<VideoItem> {
                         ),
                       ],
                     ),
-                  ] else
+                  ] else if (isDownloaded)
+                    Row(
+                      children: [
+                        const Icon(Icons.check, color: Colors.green, size: 16),
+                        const SizedBox(width: 4),
+                        const Text(
+                          "已下載完成",
+                          style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        const Spacer(),
+                        TextButton.icon(
+                          onPressed: () => widget.onDownload(
+                            widget.video.selectedFormat,
+                            widget.video.selectedQuality,
+                          ),
+                          icon: const Icon(Icons.replay, size: 16),
+                          label: const Text("重新下載", style: TextStyle(fontSize: 12)),
+                          style: TextButton.styleFrom(foregroundColor: Colors.grey),
+                        ),
+                      ],
+                    )
+                  else
                     Row(
                       children: [
                         _buildDropdown(

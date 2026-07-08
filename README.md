@@ -133,11 +133,20 @@ curl -o "video.mp4" "http://127.0.0.1:8000/video/download?url=https://www.youtub
 
 跨平台 Flutter 桌面應用，提供直覺的 YouTube 下載操作介面。詳細說明請見 [frontend/README.md](frontend/README.md)。
 
-### 快速啟動
+### 開發模式
 
 ```bash
+# 終端 1：啟動後端
+cd backend
+poetry run uvicorn main:app --host 127.0.0.1 --port 8000
+
+# 終端 2：啟動前端
 cd frontend
 flutter run
 ```
 
-> 前端預設連接 `http://127.0.0.1:8000`，請先啟動後端服務。
+> 前端內建 `BackendManager`，正式打包後會自動在背景啟動後端，開發模式需手動先啟動後端。
+
+### 打包為單一應用程式
+
+詳見 [frontend/README.md](frontend/README.md#打包為單一-windows-應用程式)。

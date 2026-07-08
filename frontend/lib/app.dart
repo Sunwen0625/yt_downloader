@@ -3,6 +3,7 @@ import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
 import 'services/youtube_api.dart';
+import 'services/backend_manager.dart';
 
 class YTDownloaderApp extends StatefulWidget {
   const YTDownloaderApp({super.key});
@@ -11,7 +12,7 @@ class YTDownloaderApp extends StatefulWidget {
   State<YTDownloaderApp> createState() => _YTDownloaderAppState();
 }
 
-class _YTDownloaderAppState extends State<YTDownloaderApp> {
+class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingObserver {
   int _currentIndex = 0;
   ThemeMode _themeMode = ThemeMode.light;
   String _character = '星奈';
@@ -19,7 +20,21 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadSettings();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      BackendManager().stop();
+    }
   }
 
   Future<void> _loadSettings() async {

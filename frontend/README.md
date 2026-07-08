@@ -84,7 +84,61 @@ lib/
     └── app_theme.dart            # 淺色／深色主題
 ```
 
+## 打包為單一 Windows 應用程式
+
+前端已內建 `BackendManager`，啟動時會自動在背景啟動後端服務（bundled executable 或開發環境中的 poetry），關閉時自動終止。
+
+### 前置需求（打包用）
+
+- Python 3.11+ & Poetry
+- Flutter SDK 3.12.2+
+- FFmpeg（MP3 轉換需要）
+- PyInstaller（`pip install pyinstaller`）
+
+### 一鍵打包
+
+```batch
+scripts\build_windows.bat
+```
+
+腳本會依序：
+1. 重置 `config.json` 為預設值
+2. 用 PyInstaller 將後端打包為 `yt-downloader-backend.exe`
+3. 用 `flutter build windows --release` 建置前端
+4. 將兩者與啟動腳本合併至 `dist/yt-downloader-win64/`
+
+### 手動打包步驟
+
+```bash
+# 步驟 1：打包後端
+cd backend
+pyinstaller build.spec
+
+# 步驟 2：建置前端
+cd frontend
+flutter build windows --release
+
+# 步驟 3：合併
+copy "backend\dist\yt-downloader-backend.exe" "frontend\build\windows\x64\runner\Release\"
+```
+
+最終 `frontend\build\windows\x64\runner\Release\` 即為可直接執行的應用程式資料夾，執行 `flutter_window.exe` 即會自動啟動後端。
+
+### 開發模式（不需打包）
+
+```bash
+# 終端 1：啟動後端
+cd backend
+poetry run uvicorn main:app --host 127.0.0.1 --port 8000
+
+# 終端 2：啟動前端
+cd frontend
+flutter run
+```
+
+前端啟動時會先檢查 `http://127.0.0.1:8000` 是否已就緒，若已就緒則跳過啟動後端。
+
 ## 注意事項
 
-- 前端目前將後端 URL 寫死為 `http://127.0.0.1:8000`，如需變更請修改 `lib/services/youtube_api.dart`
+- 後端 URL 由 `BackendManager` 動態提供（預設 `http://127.0.0.1:8000`），不再寫死
 - 下載進度條為前端模擬（每 500ms 增加 5%），非真實串流進度

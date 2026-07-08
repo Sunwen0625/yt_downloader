@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'app.dart';
+import 'services/backend_manager.dart';
 import 'dart:io';
 
 void main() async {
@@ -11,8 +12,8 @@ void main() async {
     await windowManager.ensureInitialized();
 
     WindowOptions windowOptions = const WindowOptions(
-      size: Size(1200, 800), // 初始化大小
-      minimumSize: Size(700, 600), // 最小大小，防止 UI 崩壞
+      size: Size(1200, 800),
+      minimumSize: Size(700, 600),
       center: true,
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
@@ -25,6 +26,9 @@ void main() async {
       await windowManager.focus();
     });
   }
+
+  // 啟動後端服務（bundled executable 或開發模式）
+  await BackendManager().start();
 
   runApp(const YTDownloaderApp());
 }

@@ -16,7 +16,7 @@ def load_settings() -> Settings:
     if not os.path.exists(SETTINGS_FILE):
         return Settings()
     try:
-        with open(SETTINGS_FILE) as f:
+        with open(SETTINGS_FILE, encoding='utf-8') as f:
             data = json.load(f)
         return Settings(
             download_path=data.get('download_path', DEFAULT_DOWNLOAD_PATH),
@@ -29,7 +29,7 @@ def load_settings() -> Settings:
 
 def save_settings(settings: Settings) -> None:
     os.makedirs(os.path.dirname(SETTINGS_FILE) or '.', exist_ok=True)
-    with open(SETTINGS_FILE, 'w') as f:
+    with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
         json.dump({
             'download_path': settings.download_path,
             'dark_mode': settings.dark_mode,

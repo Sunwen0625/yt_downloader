@@ -82,6 +82,7 @@ def get_settings():
     return {
         'download_path': s.download_path,
         'dark_mode': s.dark_mode,
+        'character': s.character,
     }
 
 
@@ -92,8 +93,9 @@ def update_settings(data: dict):
         raise HTTPException(status_code=400, detail='download_path is required')
     os.makedirs(download_path, exist_ok=True)
     dark_mode = data.get('dark_mode', False)
-    save_settings(Settings(download_path=download_path, dark_mode=dark_mode))
-    return {'success': True, 'download_path': download_path, 'dark_mode': dark_mode}
+    character = data.get('character', '星奈')
+    save_settings(Settings(download_path=download_path, dark_mode=dark_mode, character=character))
+    return {'success': True, 'download_path': download_path, 'dark_mode': dark_mode, 'character': character}
 
 
 if __name__ == '__main__':

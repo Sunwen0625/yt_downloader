@@ -3,3 +3,13 @@
 __pycache__
 venv_linux
 config.json
+
+# Build outputs
+backend/dist/
+backend/build/
+backend/*.spec
+frontend/build/
+frontend/.dart_tool/
+
+# Release archives
+release/

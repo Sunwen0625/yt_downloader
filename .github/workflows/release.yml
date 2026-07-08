@@ -1,0 +1,152 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+      - "*.*.*"
+
+jobs:
+  build-backend:
+    name: Build Backend (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux
+            ext: ""
+          - os: windows-latest
+            target: windows
+            ext: ".exe"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies
+        run: poetry install
+        working-directory: backend
+
+      - name: Install PyInstaller
+        run: poetry add --group dev pyinstaller
+        working-directory: backend
+
+      - name: Build backend executable
+        run: |
+          poetry run pyinstaller --onefile --name yt-downloader-backend${{ matrix.ext }} main.py
+        working-directory: backend
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yt-downloader-backend-${{ matrix.target }}
+          path: backend/dist/yt-downloader-backend${{ matrix.ext }}
+
+  build-frontend-linux:
+    name: Build Frontend (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.2"
+          channel: stable
+
+      - name: Build Linux
+        run: |
+          flutter config --enable-linux-desktop
+          flutter build linux --release
+        working-directory: frontend
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yt-downloader-frontend-linux
+          path: frontend/build/linux/x64/release/bundle/
+
+  build-frontend-windows:
+    name: Build Frontend (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.2"
+          channel: stable
+
+      - name: Build Windows
+        run: flutter build windows --release
+        working-directory: frontend
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yt-downloader-frontend-windows
+          path: frontend/build/windows/x64/runner/Release/
+
+  create-release:
+    name: Create Release
+    needs: [build-backend, build-frontend-linux, build-frontend-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create release archive - Linux
+        run: |
+          mkdir -p release/linux
+          cp -r yt-downloader-frontend-linux/* release/linux/
+          cp yt-downloader-backend-linux/yt-downloader-backend release/linux/
+          cp scripts/run.sh release/linux/
+          chmod +x release/linux/run.sh
+          cd release && tar czf yt-downloader-linux.tar.gz linux/
+
+      - name: Create release archive - Windows
+        run: |
+          mkdir -p release/windows
+          cp -r yt-downloader-frontend-windows/* release/windows/
+          cp yt-downloader-backend-windows/yt-downloader-backend.exe release/windows/
+          cp scripts/run.bat release/windows/
+          cd release && zip -r yt-downloader-windows.zip windows/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: YT Downloader ${{ github.ref_name }}
+          body: |
+            ## YT Downloader ${{ github.ref_name }}
+
+            ### 下載
+
+            請選擇對應平台的壓縮檔：
+            - `yt-downloader-linux.tar.gz` — Linux 版本
+            - `yt-downloader-windows.zip` — Windows 版本
+
+            ### 如何使用
+
+            1. 解壓縮對應平台的檔案
+            2. 執行 `run.sh`（Linux）或 `run.bat`（Windows）
+            3. 腳本會自動啟動後端服務與前端介面
+
+            > 首次執行前請確保已安裝 [Python](https://www.python.org/) 3.11+ 與 [Flutter](https://flutter.dev/) SDK。
+          files: |
+            release/yt-downloader-linux.tar.gz
+            release/yt-downloader-windows.zip

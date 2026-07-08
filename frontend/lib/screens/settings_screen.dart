@@ -5,11 +5,15 @@ import '../services/youtube_api.dart';
 class SettingsScreen extends StatefulWidget {
   final bool isDarkMode;
   final ValueChanged<bool> onToggle;
+  final String character;
+  final ValueChanged<String> onCharacterChanged;
 
   const SettingsScreen({
     super.key,
     required this.isDarkMode,
     required this.onToggle,
+    required this.character,
+    required this.onCharacterChanged,
   });
 
   @override
@@ -52,8 +56,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (result != null && result.isNotEmpty) {
         final success = await YoutubeApi.updateSettings(
-          result,
+          downloadPath: result,
           darkMode: widget.isDarkMode,
+          character: widget.character,
         );
         if (mounted) {
           if (success) {
@@ -82,8 +87,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     widget.onToggle(value);
     if (_downloadPath.isNotEmpty) {
       await YoutubeApi.updateSettings(
-        _downloadPath,
+        downloadPath: _downloadPath,
         darkMode: value,
+        character: widget.character,
+      );
+    }
+  }
+
+  Future<void> _toggleCharacter(String name) async {
+    widget.onCharacterChanged(name);
+    if (_downloadPath.isNotEmpty) {
+      await YoutubeApi.updateSettings(
+        downloadPath: _downloadPath,
+        darkMode: widget.isDarkMode,
+        character: name,
       );
     }
   }
@@ -114,6 +131,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   trailing: Switch(
                     value: widget.isDarkMode,
                     onChanged: _toggleDarkMode,
+                  ),
+                ),
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Column(
+                    children: [
+                      const Text(
+                        '下載角色',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.asset(
+                          'assets/${widget.character}.gif',
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ChoiceChip(
+                            label: const Text('星奈'),
+                            selected: widget.character == '星奈',
+                            onSelected: (_) => _toggleCharacter('星奈'),
+                            selectedColor: colorScheme.primaryContainer,
+                          ),
+                          const SizedBox(width: 16),
+                          ChoiceChip(
+                            label: const Text('彩奈'),
+                            selected: widget.character == '彩奈',
+                            onSelected: (_) => _toggleCharacter('彩奈'),
+                            selectedColor: colorScheme.primaryContainer,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
                 const Divider(),

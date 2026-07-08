@@ -6,6 +6,7 @@ class VideoItem extends StatefulWidget {
   final bool isDownloading;
   final double downloadProgress;
   final Function(String format, String quality) onDownload;
+  final String character;
 
   const VideoItem({
     super.key,
@@ -13,6 +14,7 @@ class VideoItem extends StatefulWidget {
     required this.isDownloading,
     required this.downloadProgress,
     required this.onDownload,
+    required this.character,
   });
 
   @override
@@ -112,7 +114,7 @@ class _VideoItemState extends State<VideoItem> {
                           child: Container(
                             color: Colors.white,
                             child: Image.asset(
-                              'assets/Hoshina.gif',
+                              'assets/${widget.character}.gif',
                               width: 60,
                               height: 60,
                               fit: BoxFit.cover,

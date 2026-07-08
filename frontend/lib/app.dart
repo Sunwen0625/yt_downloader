@@ -14,20 +14,21 @@ class YTDownloaderApp extends StatefulWidget {
 class _YTDownloaderAppState extends State<YTDownloaderApp> {
   int _currentIndex = 0;
   ThemeMode _themeMode = ThemeMode.light;
+  String _character = '星奈';
 
   @override
   void initState() {
     super.initState();
-    _loadTheme();
+    _loadSettings();
   }
 
-  Future<void> _loadTheme() async {
+  Future<void> _loadSettings() async {
     try {
       final data = await YoutubeApi.getSettings();
-      final isDark = data['dark_mode'] == true;
       if (mounted) {
         setState(() {
-          _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+          _themeMode = data['dark_mode'] == true ? ThemeMode.dark : ThemeMode.light;
+          _character = data['character'] ?? '星奈';
         });
       }
     } catch (_) {}
@@ -36,6 +37,12 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> {
   void _onToggleTheme(bool isDark) {
     setState(() {
       _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  void _onCharacterChanged(String name) {
+    setState(() {
+      _character = name;
     });
   }
 
@@ -51,10 +58,12 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> {
         body: IndexedStack(
           index: _currentIndex,
           children: [
-            const HomeScreen(),
+            HomeScreen(character: _character),
             SettingsScreen(
               isDarkMode: _themeMode == ThemeMode.dark,
               onToggle: _onToggleTheme,
+              character: _character,
+              onCharacterChanged: _onCharacterChanged,
             ),
           ],
         ),

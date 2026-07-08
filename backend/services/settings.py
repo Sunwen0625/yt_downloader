@@ -6,9 +6,10 @@ DEFAULT_DOWNLOAD_PATH = os.path.expanduser('~/Downloads')
 
 
 class Settings:
-    def __init__(self, download_path: str = DEFAULT_DOWNLOAD_PATH, dark_mode: bool = False):
+    def __init__(self, download_path: str = DEFAULT_DOWNLOAD_PATH, dark_mode: bool = False, character: str = '星奈'):
         self.download_path = download_path
         self.dark_mode = dark_mode
+        self.character = character
 
 
 def load_settings() -> Settings:
@@ -20,6 +21,7 @@ def load_settings() -> Settings:
         return Settings(
             download_path=data.get('download_path', DEFAULT_DOWNLOAD_PATH),
             dark_mode=data.get('dark_mode', False),
+            character=data.get('character', '星奈'),
         )
     except (json.JSONDecodeError, OSError):
         return Settings()
@@ -31,4 +33,5 @@ def save_settings(settings: Settings) -> None:
         json.dump({
             'download_path': settings.download_path,
             'dark_mode': settings.dark_mode,
+            'character': settings.character,
         }, f, indent=2)

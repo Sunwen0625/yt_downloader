@@ -7,6 +7,7 @@ class HomeResultsView extends StatelessWidget {
   final List<VideoItem> videos;
   final Map<String, double> downloadingProgress;
   final Function(VideoItem video, String format, String quality) onDownload;
+  final String character;
 
   const HomeResultsView({
     super.key,
@@ -14,6 +15,7 @@ class HomeResultsView extends StatelessWidget {
     required this.videos,
     required this.downloadingProgress,
     required this.onDownload,
+    required this.character,
   });
 
   @override
@@ -58,6 +60,7 @@ class HomeResultsView extends StatelessWidget {
                     isDownloading: progress != null,
                     downloadProgress: progress ?? 0.0,
                     onDownload: (format, quality) => onDownload(video, format, quality),
+                    character: character,
                   );
                 },
               ),

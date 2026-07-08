@@ -5,7 +5,9 @@ import 'home_screen/input_view.dart';
 import 'home_screen/results_view.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String character;
+
+  const HomeScreen({super.key, required this.character});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -75,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _downloadingProgress[videoId] = 1.0;
           video.isDownloaded = true;
         });
-        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(filename != null ? "下載成功：$filename" : "下載失敗"),
@@ -131,6 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   videos: _videos,
                   downloadingProgress: _downloadingProgress,
                   onDownload: _handleDownload,
+                  character: widget.character,
                 ) 
               : HomeInputView(
                   controller: _urlController,

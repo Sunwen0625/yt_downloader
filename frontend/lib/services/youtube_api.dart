@@ -43,11 +43,14 @@ class YoutubeApi {
     return jsonDecode(res.body);
   }
 
-  static Future<bool> updateSettings(String downloadPath, {bool? darkMode}) async {
+  static Future<bool> updateSettings({
+    required String downloadPath,
+    bool? darkMode,
+    String? character,
+  }) async {
     final body = <String, dynamic>{'download_path': downloadPath};
-    if (darkMode != null) {
-      body['dark_mode'] = darkMode;
-    }
+    if (darkMode != null) body['dark_mode'] = darkMode;
+    if (character != null) body['character'] = character;
     final res = await http.put(
       Uri.parse("$baseUrl/settings"),
       headers: {"Content-Type": "application/json"},

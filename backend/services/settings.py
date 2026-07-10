@@ -6,6 +6,9 @@ DEFAULT_DOWNLOAD_PATH = os.path.expanduser('~/Downloads')
 
 
 class Settings:
+    """
+    設置setting資訊
+    """
     def __init__(self, download_path: str = DEFAULT_DOWNLOAD_PATH, dark_mode: bool = False, character: str = '星奈'):
         self.download_path = download_path
         self.dark_mode = dark_mode
@@ -13,11 +16,13 @@ class Settings:
 
 
 def load_settings() -> Settings:
+    # 讀取設置，不存在返回默認資訊
     if not os.path.exists(SETTINGS_FILE):
         return Settings()
     try:
         with open(SETTINGS_FILE, encoding='utf-8') as f:
             data = json.load(f)
+        # 返回設置資訊
         return Settings(
             download_path=data.get('download_path', DEFAULT_DOWNLOAD_PATH),
             dark_mode=data.get('dark_mode', False),

@@ -7,8 +7,10 @@ from services.info import get_video_info
 from services.download import stream_download, download_video, download_mp3
 from services.settings import load_settings, save_settings, Settings
 
+#建立FastAPI應用
 app = FastAPI(title='YT Downloader API')
 
+#開放跨域請求
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
@@ -16,7 +18,7 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-
+#取得撥放列表清單 為登入上限為100個影片
 @app.get('/playlist')
 def playlist(
     url: str = Query(..., description='YouTube playlist or channel URL'),
@@ -29,7 +31,7 @@ def playlist(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
+#取得影片資訊
 @app.get('/video/info')
 def video_info(url: str = Query(..., description='YouTube video URL')):
     try:
@@ -37,7 +39,7 @@ def video_info(url: str = Query(..., description='YouTube video URL')):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
+#取得下載資訊
 @app.get('/video/download')
 def video_download(
     url: str = Query(..., description='YouTube video URL'),
@@ -50,7 +52,7 @@ def video_download(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
+#下載
 @app.post('/video/download')
 async def video_download_post(request: Request):
     try:

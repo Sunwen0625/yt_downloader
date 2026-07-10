@@ -3,6 +3,14 @@ from typing import Optional
 
 
 def format_duration(seconds) -> str:
+    """轉換時間
+
+    Args:
+        seconds (str): 從yt-dlp 取得的時間
+
+    Returns:
+        str: 格式化後的時間，格式為 HH:MM:SS 或 MM:SS
+    """
     seconds = int(seconds or 0)
     hours, remainder = divmod(seconds, 3600)
     minutes, secs = divmod(remainder, 60)
@@ -12,9 +20,14 @@ def format_duration(seconds) -> str:
 
 
 class FormatInfo(BaseModel):
-    format_id: str
-    ext: str
-    quality: str
+    """影片資訊規格
+
+    Args:
+        BaseModel (_type_): _description_
+    """
+    format_id: str 
+    ext: str  
+    quality: str   
     filesize: Optional[int] = None
     vcodec: Optional[str] = None
     acodec: Optional[str] = None
@@ -37,6 +50,11 @@ class VideoInfo(BaseModel):
 
 
 class PlaylistVideo(BaseModel):
+    """影片列表接口
+
+    Args:
+        BaseModel (_type_): _description_
+    """
     id: str
     title: str
     duration: str
@@ -45,6 +63,11 @@ class PlaylistVideo(BaseModel):
 
 
 class PlaylistInfo(BaseModel):
+    """播放列表資訊
+
+    Args:
+        BaseModel (_type_): _description_
+    """
     playlist_id: str
     playlist_title: str
     videos: list[PlaylistVideo]

@@ -15,7 +15,7 @@ def _normalize_playlist_url(url: str) -> str:
 
 def get_playlist(url: str) -> PlaylistInfo:
     playlist_url = _normalize_playlist_url(url)
-
+    #設置 yt-dlp 參數
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
@@ -27,6 +27,7 @@ def get_playlist(url: str) -> PlaylistInfo:
         info = ydl.extract_info(playlist_url, download=False)
 
     if 'entries' not in info:
+        #如果不是播放列表，則將單個影片資訊包裝成播放列表格式
         return PlaylistInfo(
             playlist_id=info.get('id') or '',
             playlist_title=info.get('title') or 'Single Video',
@@ -46,11 +47,13 @@ def get_playlist(url: str) -> PlaylistInfo:
 
     videos = []
     for entry in info.get('entries', []):
+        #影片不存在或被刪除，跳過
         if entry is None:
             continue
         video_id = entry.get('id') or ''
         if not video_id:
             continue
+        #串成列表 內部都是 PlaylistVideo 物件
         videos.append(
             PlaylistVideo(
                 id=video_id,

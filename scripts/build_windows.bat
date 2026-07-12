@@ -102,10 +102,7 @@ if exist ".fvm\flutter_sdk\bin\flutter.bat" (
 ) else (
     where fvm >nul 2>nul
     if !errorlevel! equ 0 (
-        for /f "tokens=*" %%i in ('fvm flutter') do (
-            if not defined FLUTTER_CMD set "FLUTTER_CMD=%%i"
-        )
-        if not defined FLUTTER_CMD set "FLUTTER_CMD=fvm flutter"
+        set "FLUTTER_CMD=fvm flutter"
         echo [INFO] Using fvm flutter
     ) else (
         where flutter >nul 2>nul

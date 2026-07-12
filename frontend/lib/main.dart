@@ -27,8 +27,8 @@ void main() async {
     });
   }
 
-  // 啟動後端服務（bundled executable 或開發模式）
-  await BackendManager().start();
+  // 在背景啟動後端服務，不阻塞 UI
+  BackendManager().start();
 
   runApp(const YTDownloaderApp());
 }

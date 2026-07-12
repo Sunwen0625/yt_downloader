@@ -5,11 +5,9 @@ venv_linux
 config.json
 
 # Build outputs
+dist/
 backend/dist/
 backend/build/
 backend/*.spec
 frontend/build/
 frontend/.dart_tool/
-
-# Release archives
-release/

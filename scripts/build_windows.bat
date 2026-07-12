@@ -22,7 +22,7 @@ echo.
 :: Step 1: Clean config.json
 :: ===================================================================
 echo [1/5] Resetting config.json to defaults...
-echo {"download_path": "~/Downloads", "dark_mode": false, "character": "\u661f\u5948"} > "%BACKEND_DIR%\config.json"
+python -c "import json; json.dump({'download_path': '~/Downloads', 'dark_mode': False, 'character': '\u661f\u5948'}, open(r'%BACKEND_DIR%\config.json', 'w', encoding='utf-8'), indent=2, ensure_ascii=False)"
 
 :: ===================================================================
 :: Step 2: Install Python dependencies
@@ -152,6 +152,9 @@ xcopy /E /I "%FRONTEND_DIR%\build\windows\x64\runner\Release" "%OUTPUT_DIR%\" >n
 
 :: Copy backend executable
 copy "%BACKEND_DIR%\dist\yt-downloader-backend.exe" "%OUTPUT_DIR%\" >nul
+
+:: Copy config.json (will be recreated by backend on first save if missing)
+copy "%BACKEND_DIR%\config.json" "%OUTPUT_DIR%\" >nul
 
 :: Copy launcher
 copy "%ROOT_DIR%\scripts\run.bat" "%OUTPUT_DIR%\" >nul

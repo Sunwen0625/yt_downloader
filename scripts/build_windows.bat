@@ -156,14 +156,38 @@ copy "%BACKEND_DIR%\dist\yt-downloader-backend.exe" "%OUTPUT_DIR%\" >nul
 :: Copy config.json (will be recreated by backend on first save if missing)
 copy "%BACKEND_DIR%\config.json" "%OUTPUT_DIR%\" >nul
 
-:: Copy launcher
-copy "%ROOT_DIR%\scripts\run.bat" "%OUTPUT_DIR%\" >nul
+:: Create production launcher script
+echo @echo off > "%OUTPUT_DIR%\YT Downloader.bat"
+echo chcp 65001 ^>nul >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo title YT Downloader >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo echo Starting backend service... >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo start "YT-Backend" "%~dp0yt-downloader-backend.exe" >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo echo Waiting for backend... >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo timeout /t 5 /nobreak ^>nul >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo echo Starting frontend... >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo start "" "%~dp0flutter_windows.exe" >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo echo. >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo echo Both backend and frontend are running. >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo echo Close this window to shut down everything. >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo echo. >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo pause ^>nul >> "%OUTPUT_DIR%\YT Downloader.bat"
+echo taskkill /fi "WINDOWTITLE eq YT-Backend" /f ^>nul 2^>nul >> "%OUTPUT_DIR%\YT Downloader.bat"
+
+:: Also create a standalone backend starter (for debugging)
+echo @echo off > "%OUTPUT_DIR%\start_backend.bat"
+echo chcp 65001 ^>nul >> "%OUTPUT_DIR%\start_backend.bat"
+echo title YT-Backend >> "%OUTPUT_DIR%\start_backend.bat"
+echo "%~dp0yt-downloader-backend.exe" >> "%OUTPUT_DIR%\start_backend.bat"
+echo pause >> "%OUTPUT_DIR%\start_backend.bat"
 
 :: Verify final bundle
-if not exist "%OUTPUT_DIR%\flutter_windows.exe" (
-    if not exist "%OUTPUT_DIR%\frontend.exe" (
-        echo [WARN] Main executable not found in output.
-        dir "%OUTPUT_DIR%"
+dir "%OUTPUT_DIR%\yt-downloader-backend.exe" >nul 2>nul
+if !errorlevel! neq 0 (
+    echo [WARN] Backend executable missing!
+)
+for %%i in ("%OUTPUT_DIR%\*.exe") do (
+    if /I "%%~nxi" NEQ "yt-downloader-backend.exe" (
+        set "MAIN_EXE=%%~nxi"
     )
 )
 
@@ -173,9 +197,10 @@ echo  Build complete!
 echo.
 echo  Output: %OUTPUT_DIR%
 echo.
-echo  To run:
-echo    %OUTPUT_DIR%\frontend.exe  ^(adjust name based on actual exe^)
+echo  To run: double-click "YT Downloader.bat"
 echo.
-echo  The app will auto-start the backend service on launch.
+echo  This will start the backend service,
+echo  wait for it to be ready, then launch
+echo  the Flutter frontend.
 echo ========================================
 pause

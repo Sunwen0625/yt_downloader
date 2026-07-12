@@ -29,6 +29,6 @@ void main() async {
 
   runApp(const YTDownloaderApp());
 
-  // 視窗顯示後再啟動後端，不阻塞 UI
+  // 在背景偵測後端連線（Launcher 已先啟動後端）
   BackendManager().start();
 }

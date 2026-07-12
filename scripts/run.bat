@@ -2,59 +2,58 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
-set "SCRIPT_DIR=%~dp0"
-set "ROOT_DIR=%SCRIPT_DIR%.."
-set "BACKEND_DIR=%ROOT_DIR%backend"
-set "FRONTEND_DIR=%ROOT_DIR%frontend"
+:: Resolve all paths to absolute
+for %%i in ("%~dp0..") do set "ROOT_DIR=%%~fi"
+set "BACKEND_DIR=%ROOT_DIR%\backend"
+set "FRONTEND_DIR=%ROOT_DIR%\frontend"
 
 echo === YT Downloader Launcher (Development Mode) ===
 echo.
 
-:: Start backend
+:: ── Step 1: Start backend ──────────────────────────────────────────
 echo [1/2] Starting backend...
 
-:: Check if bundled backend executable exists (production mode)
+:: Production mode: bundled executable
 if exist "%ROOT_DIR%\yt-downloader-backend.exe" (
     echo [INFO] Found bundled backend executable.
     start "YT-Backend" "%ROOT_DIR%\yt-downloader-backend.exe"
     goto wait_backend
 )
-
 if exist "%BACKEND_DIR%\dist\yt-downloader-backend.exe" (
     echo [INFO] Found built backend executable.
     start "YT-Backend" "%BACKEND_DIR%\dist\yt-downloader-backend.exe"
     goto wait_backend
 )
 
-:: Development mode: try poetry or uvicorn
-cd /d "%BACKEND_DIR%"
+:: Development mode
+pushd "%BACKEND_DIR%"
 
 where poetry >nul 2>nul
-if %errorlevel% equ 0 (
+if !errorlevel! equ 0 (
     echo [INFO] Starting backend via poetry...
     start "YT-Backend" cmd /c "poetry run uvicorn main:app --host 127.0.0.1 --port 8000"
+    popd
     goto wait_backend
 )
 
-:: Check inside .venv directly
 if exist ".venv\Scripts\uvicorn.exe" (
     echo [INFO] Starting backend via .venv uvicorn...
     start "YT-Backend" cmd /c ".venv\Scripts\uvicorn main:app --host 127.0.0.1 --port 8000"
+    popd
     goto wait_backend
 )
 
 where uvicorn >nul 2>nul
-if %errorlevel% equ 0 (
+if !errorlevel! equ 0 (
     echo [INFO] Starting backend via system uvicorn...
     start "YT-Backend" cmd /c "uvicorn main:app --host 127.0.0.1 --port 8000"
+    popd
     goto wait_backend
 )
 
-echo [ERROR] Backend not found.
-echo.
-echo Options:
-echo   1. Run backend manually:  cd backend ^&^& poetry run uvicorn main:app --host 127.0.0.1 --port 8000
-echo   2. Build backend first:   pyinstaller backend\build.spec
+popd
+echo [ERROR] Backend not found. Start it manually:
+echo   cd backend ^&^& poetry run uvicorn main:app --host 127.0.0.1 --port 8000
 pause
 exit /b 1
 
@@ -62,13 +61,12 @@ exit /b 1
 echo Waiting for backend to be ready...
 timeout /t 5 /nobreak >nul
 
-:: Start frontend
+:: ── Step 2: Start frontend ─────────────────────────────────────────
 echo [2/2] Starting frontend...
-cd /d "%FRONTEND_DIR%"
+pushd "%FRONTEND_DIR%"
 
-:: Detect Flutter (FVM or system)
-set "FLUTTER_CMD=flutter"
-
+:: Detect Flutter
+set "FLUTTER_CMD="
 if exist ".fvm\flutter_sdk\bin\flutter.bat" (
     set "FLUTTER_CMD=.fvm\flutter_sdk\bin\flutter.bat"
 ) else if exist ".fvm\flutter_sdk\bin\flutter" (
@@ -80,20 +78,23 @@ if exist ".fvm\flutter_sdk\bin\flutter.bat" (
     ) else (
         where flutter >nul 2>nul
         if !errorlevel! equ 0 (
-            echo [INFO] Using system Flutter
-        ) else (
-            echo [ERROR] Flutter not found.
-            echo If using FVM, run: fvm use
-            pause
-            exit /b 1
+            set "FLUTTER_CMD=flutter"
         )
     )
 )
 
-echo [INFO] Running: %FLUTTER_CMD% run
-call %FLUTTER_CMD% run
+if not defined FLUTTER_CMD (
+    echo [ERROR] Flutter not found. If using FVM, run: fvm use
+    popd
+    pause
+    exit /b 1
+)
 
-:: Cleanup backend on exit
+echo [INFO] Running: !FLUTTER_CMD! run
+call !FLUTTER_CMD! run
+popd
+
+:: ── Cleanup ─────────────────────────────────────────────────────────
 echo Shutting down backend...
 taskkill /fi "WINDOWTITLE eq YT-Backend" /f >nul 2>nul
 echo Done.

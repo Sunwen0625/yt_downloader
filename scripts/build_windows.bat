@@ -53,18 +53,28 @@ pushd "%BACKEND_DIR%"
 if exist "dist\yt-downloader-backend.exe" del "dist\yt-downloader-backend.exe"
 if exist "yt-downloader-backend.exe" del "yt-downloader-backend.exe"
 
-:: Determine pyinstaller command
-set "PYINSTALL_CMD=pyinstaller build.spec"
+:: Ensure pyinstaller is available
 where poetry >nul 2>nul
 if !errorlevel! equ 0 (
+    call poetry run pyinstaller --version >nul 2>nul
+    if !errorlevel! neq 0 (
+        echo [INFO] Installing pyinstaller into Poetry venv...
+        call poetry run pip install pyinstaller
+    )
     set "PYINSTALL_CMD=poetry run pyinstaller build.spec"
+) else (
+    pip install pyinstaller 2>nul
+    set "PYINSTALL_CMD=pyinstaller build.spec"
 )
 
-call %PYINSTALL_CMD%
+echo [INFO] Running: !PYINSTALL_CMD!
+call !PYINSTALL_CMD!
 if %errorlevel% neq 0 (
     echo [ERROR] Backend build failed!
     echo.
-    echo Try: cd backend ^&^& python -m PyInstaller build.spec
+    echo If the build is missing packages, try running:
+    echo   cd backend
+    echo   poetry run python -m PyInstaller --clean build.spec
     popd
     pause
     exit /b 1

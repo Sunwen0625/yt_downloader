@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
@@ -16,16 +17,29 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingOb
   int _currentIndex = 0;
   ThemeMode _themeMode = ThemeMode.light;
   String _character = '星奈';
+  bool _backendReady = false;
+  StreamSubscription<bool>? _backendSub;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadSettings();
+
+    // Listen for backend readiness
+    _backendSub = BackendManager().onReady.listen((ready) {
+      if (ready && mounted) _loadSettings();
+    });
+
+    // Try loading settings now (in case backend is already up)
+    if (BackendManager().isReady) {
+      _backendReady = true;
+      _loadSettings();
+    }
   }
 
   @override
   void dispose() {
+    _backendSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -44,9 +58,12 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingOb
         setState(() {
           _themeMode = data['dark_mode'] == true ? ThemeMode.dark : ThemeMode.light;
           _character = data['character'] ?? '星奈';
+          _backendReady = true;
         });
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) setState(() => _backendReady = false);
+    }
   }
 
   void _onToggleTheme(bool isDark) {

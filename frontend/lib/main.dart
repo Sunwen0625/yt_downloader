@@ -27,8 +27,8 @@ void main() async {
     });
   }
 
-  // 在背景啟動後端服務，不阻塞 UI
-  BackendManager().start();
-
   runApp(const YTDownloaderApp());
+
+  // 視窗顯示後再啟動後端，不阻塞 UI
+  BackendManager().start();
 }

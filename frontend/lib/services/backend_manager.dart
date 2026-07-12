@@ -13,13 +13,18 @@ class BackendManager {
   static const int defaultPort = 8000;
 
   Process? _process;
+  bool _ready = false;
+  Timer? _healthTimer;
+
   String get host => defaultHost;
   int get port => defaultPort;
   String get baseUrl => 'http://$host:$port';
+  bool get isReady => _ready;
 
-  bool get isRunning => _process != null;
+  /// Notified when backend becomes ready (or after initial check)
+  final _readyController = StreamController<bool>.broadcast();
+  Stream<bool> get onReady => _readyController.stream;
 
-  /// Directory containing the current executable
   String get _appDir {
     try {
       return File(Platform.resolvedExecutable).parent.path;
@@ -28,56 +33,43 @@ class BackendManager {
     }
   }
 
-  /// Find the backend executable bundled with the app
   String _findBackendExecutable() {
     final exeName = Platform.isWindows
         ? 'yt-downloader-backend.exe'
         : 'yt-downloader-backend';
 
-    // 1) Same directory as the Flutter executable
     final sameDir = File('${_appDir}\\$exeName');
     if (sameDir.existsSync()) {
-      debugPrint('[BackendManager] Found at: ${sameDir.absolute.path}');
+      debugPrint('[Backend] Found at: ${sameDir.absolute.path}');
       return sameDir.absolute.path;
     }
 
-    // 2) Current working directory
     final cwd = File(exeName);
     if (cwd.existsSync()) {
-      debugPrint('[BackendManager] Found at: ${cwd.absolute.path}');
+      debugPrint('[Backend] Found at: ${cwd.absolute.path}');
       return cwd.absolute.path;
     }
 
-    // 3) Search PATH
-    final pathEnv = Platform.environment['PATH'] ?? '';
-    for (final dir in pathEnv.split(';')) {
-      if (dir.isEmpty) continue;
-      try {
-        final candidate = File('$dir\\$exeName');
-        if (candidate.existsSync()) {
-          debugPrint('[BackendManager] Found on PATH: ${candidate.absolute.path}');
-          return candidate.absolute.path;
-        }
-      } catch (_) {}
-    }
-
-    debugPrint('[BackendManager] Backend executable not found.');
+    debugPrint('[Backend] Executable not found.');
     return '';
   }
 
-  /// Start the backend process (non-blocking for UI)
-  Future<bool> start({String? customPath}) async {
-    if (_process != null) return true;
+  /// Start backend and wait up to [timeout] for it to respond.
+  /// UI shows immediately after timeout; backend continues starting in background.
+  Future<void> start({Duration timeout = const Duration(seconds: 5)}) async {
+    if (_process != null || _ready) return;
 
+    // Check if already running (e.g. development mode)
     if (await _healthCheck()) {
-      debugPrint('[BackendManager] Backend already running.');
-      return true;
+      _setReady(true);
+      return;
     }
 
-    final executable = customPath ?? _findBackendExecutable();
+    final executable = _findBackendExecutable();
     if (executable.isEmpty || !File(executable).existsSync()) {
-      debugPrint('[BackendManager] No backend executable found, skipping auto-start.');
-      return false;
+      debugPrint('[Backend] No bundled backend, assuming development mode.');
+      _beginBackgroundCheck();
+      return;
     }
 
     try {
@@ -89,28 +81,46 @@ class BackendManager {
         debugPrint('[backend] $data');
       });
       _process!.exitCode.then((code) {
-        debugPrint('[BackendManager] Process exited with code: $code');
+        debugPrint('[Backend] Process exited with code: $code');
         _process = null;
+        _ready = false;
       });
     } catch (e) {
-      debugPrint('[BackendManager] Failed to start: $e');
-      return false;
+      debugPrint('[Backend] Failed to start: $e');
     }
 
-    // Wait briefly for backend to be ready
-    for (int i = 0; i < 10; i++) {
+    // Wait for readiness up to timeout
+    final deadline = DateTime.now().add(timeout);
+    while (DateTime.now().isBefore(deadline)) {
       if (await _healthCheck()) {
-        debugPrint('[BackendManager] Backend is ready.');
-        return true;
+        _setReady(true);
+        return;
       }
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(milliseconds: 500));
     }
 
-    debugPrint('[BackendManager] Backend started but not responding yet.');
-    return true;
+    debugPrint('[Backend] Timeout waiting for backend, continuing in background.');
+    _beginBackgroundCheck();
+  }
+
+  void _beginBackgroundCheck() {
+    _healthTimer?.cancel();
+    _healthTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+      if (await _healthCheck()) {
+        _setReady(true);
+        _healthTimer?.cancel();
+      }
+    });
+  }
+
+  void _setReady(bool value) {
+    if (_ready == value) return;
+    _ready = value;
+    _readyController.add(value);
   }
 
   Future<void> stop() async {
+    _healthTimer?.cancel();
     if (_process != null) {
       _process!.kill();
       await _process!.exitCode.timeout(
@@ -122,6 +132,7 @@ class BackendManager {
       );
       _process = null;
     }
+    _ready = false;
   }
 
   Future<bool> _healthCheck() async {
@@ -133,5 +144,10 @@ class BackendManager {
     } catch (_) {
       return false;
     }
+  }
+
+  void dispose() {
+    _healthTimer?.cancel();
+    _readyController.close();
   }
 }

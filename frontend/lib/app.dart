@@ -45,7 +45,7 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingOb
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.detach) {
+    if (state == AppLifecycleState.detached) {
       BackendManager().shutdown();
     }
   }

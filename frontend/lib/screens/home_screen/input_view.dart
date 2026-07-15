@@ -14,22 +14,20 @@ class HomeInputView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.video_library, size: 80, color: colorScheme.primary),
+          const Icon(Icons.video_library, size: 80, color: Colors.redAccent),
           const SizedBox(height: 24),
           TextField(
             controller: controller,
             decoration: InputDecoration(
               hintText: '貼上 YouTube 影片或播放清單網址',
-              prefixIcon: Icon(Icons.link, color: colorScheme.onSurfaceVariant),
+              prefixIcon: const Icon(Icons.link),
               suffixIcon: IconButton(
-                icon: Icon(Icons.content_paste, color: colorScheme.onSurfaceVariant),
+                icon: const Icon(Icons.content_paste),
                 tooltip: '貼上網址',
                 onPressed: () async {
                   final data = await Clipboard.getData(Clipboard.kTextPlain);
@@ -40,7 +38,7 @@ class HomeInputView extends StatelessWidget {
               ),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               filled: true,
-              fillColor: colorScheme.surfaceContainerHighest,
+              fillColor: Colors.grey[100],
             ),
             textInputAction: TextInputAction.go,
             onSubmitted: (_) => onSearch(),
@@ -48,6 +46,12 @@ class HomeInputView extends StatelessWidget {
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: onSearch,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             child: const Text('解析網址', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ],

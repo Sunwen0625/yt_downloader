@@ -6,7 +6,6 @@ class VideoItem extends StatefulWidget {
   final bool isDownloading;
   final double downloadProgress;
   final Function(String format, String quality) onDownload;
-  final String character;
 
   const VideoItem({
     super.key,
@@ -14,7 +13,6 @@ class VideoItem extends StatefulWidget {
     required this.isDownloading,
     required this.downloadProgress,
     required this.onDownload,
-    required this.character,
   });
 
   @override
@@ -24,55 +22,33 @@ class VideoItem extends StatefulWidget {
 class _VideoItemState extends State<VideoItem> {
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final bool isDownloaded = widget.video.isDownloaded;
-
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: isDownloaded ? 0 : 2,
-      color: isDownloaded ? colorScheme.primaryContainer.withOpacity(0.3) : colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isDownloaded ? colorScheme.primaryContainer : Colors.transparent,
-          width: 1,
-        ),
-      ),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 縮圖
             Stack(
               children: [
-                Opacity(
-                  opacity: isDownloaded ? 0.7 : 1.0,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      widget.video.thumbnail,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    widget.video.thumbnail,
+                    width: 140,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
                       width: 140,
                       height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 140,
-                        height: 80,
-                        color: colorScheme.surfaceContainerHighest,
-                        child: Icon(Icons.video_library, color: colorScheme.onSurfaceVariant),
-                      ),
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.video_library, color: Colors.grey),
                     ),
                   ),
                 ),
-                if (isDownloaded)
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.check_circle, color: Colors.green, size: 32),
-                    ),
-                  ),
                 Positioned(
                   bottom: 4,
                   right: 4,
@@ -91,6 +67,7 @@ class _VideoItemState extends State<VideoItem> {
               ],
             ),
             const SizedBox(width: 16),
+            // 影片資訊
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,10 +76,9 @@ class _VideoItemState extends State<VideoItem> {
                     widget.video.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: isDownloaded ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -111,14 +87,11 @@ class _VideoItemState extends State<VideoItem> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(6),
-                          child: Container(
-                            color: Colors.white,
-                            child: Image.asset(
-                              'assets/${widget.character}.gif',
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            ),
+                          child: Image.asset(
+                            'assets/Hoshina.gif',
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -128,42 +101,21 @@ class _VideoItemState extends State<VideoItem> {
                             children: [
                               LinearProgressIndicator(
                                 value: widget.downloadProgress,
-                                backgroundColor: colorScheme.surfaceContainerHighest,
-                                color: colorScheme.primary,
+                                backgroundColor: Colors.grey[200],
+                                color: Colors.redAccent,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 "${(widget.downloadProgress * 100).toStringAsFixed(0)}%",
-                                style: TextStyle(fontSize: 10, color: colorScheme.onSurfaceVariant),
+                                style: const TextStyle(fontSize: 10, color: Colors.grey),
                               ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                  ] else if (isDownloaded)
-                    Row(
-                      children: [
-                        const Icon(Icons.check, color: Colors.green, size: 16),
-                        const SizedBox(width: 4),
-                        const Text(
-                          "已下載完成",
-                          style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                        const Spacer(),
-                        TextButton.icon(
-                          onPressed: () => widget.onDownload(
-                            widget.video.selectedFormat,
-                            widget.video.selectedQuality,
-                          ),
-                          icon: const Icon(Icons.replay, size: 16),
-                          label: const Text("重新下載", style: TextStyle(fontSize: 12)),
-                          style: TextButton.styleFrom(foregroundColor: colorScheme.onSurfaceVariant),
-                        ),
-                      ],
-                    )
-                  else
+                  ] else
                     Row(
                       children: [
                         _buildDropdown(
@@ -185,9 +137,9 @@ class _VideoItemState extends State<VideoItem> {
                             widget.video.selectedFormat,
                             widget.video.selectedQuality,
                           ),
-                          icon: Icon(Icons.download, color: colorScheme.primary),
+                          icon: const Icon(Icons.download, color: Colors.redAccent),
                           style: IconButton.styleFrom(
-                            backgroundColor: colorScheme.primary.withOpacity(0.1),
+                            backgroundColor: Colors.redAccent.withOpacity(0.1),
                           ),
                         ),
                       ],
@@ -206,19 +158,17 @@ class _VideoItemState extends State<VideoItem> {
     required List<String> items,
     required ValueChanged<String?> onChanged,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: Colors.grey[100],
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isDense: true,
-          style: TextStyle(fontSize: 12, color: colorScheme.onSurface),
+          style: const TextStyle(fontSize: 12, color: Colors.black87),
           items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
           onChanged: onChanged,
         ),

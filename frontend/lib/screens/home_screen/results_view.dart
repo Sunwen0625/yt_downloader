@@ -4,44 +4,53 @@ import '../../widgets/video_item.dart' as widget;
 
 class HomeResultsView extends StatelessWidget {
   final String url;
+  final String playlistTitle;
   final List<VideoItem> videos;
   final Map<String, double> downloadingProgress;
   final Function(VideoItem video, String format, String quality) onDownload;
-  final String character;
 
   const HomeResultsView({
     super.key,
     required this.url,
+    required this.playlistTitle,
     required this.videos,
     required this.downloadingProgress,
     required this.onDownload,
-    required this.character,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return LayoutBuilder(
       builder: (context, constraints) {
+        // 動態計算高度，確保畫面顯示約 5 個
         double itemHeight = (constraints.maxHeight / 5).clamp(100.0, 150.0);
 
         return Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
-              color: colorScheme.surfaceContainerHighest,
-              child: Row(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              color: Colors.grey[50],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.check_circle, color: colorScheme.tertiary, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '已解析: $url',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
-                    ),
+                  Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          playlistTitle.isNotEmpty ? playlistTitle : '播放清單',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '共 ${videos.length} 部影片',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),
@@ -60,7 +69,6 @@ class HomeResultsView extends StatelessWidget {
                     isDownloading: progress != null,
                     downloadProgress: progress ?? 0.0,
                     onDownload: (format, quality) => onDownload(video, format, quality),
-                    character: character,
                   );
                 },
               ),

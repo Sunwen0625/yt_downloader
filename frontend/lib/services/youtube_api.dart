@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'backend_manager.dart';
 
 class YoutubeApi {
-  static String get _baseUrl => BackendManager().baseUrl;
+  static const baseUrl = "http://127.0.0.1:8000";
 
   static Future<Map<String, dynamic>> getPlaylist(String url) async {
     final res = await http.get(
-      Uri.parse("$_baseUrl/playlist?url=${Uri.encodeComponent(url)}"),
-    );
+      Uri.parse("$baseUrl/playlist?url=${Uri.encodeComponent(url)}"),
+    ).timeout(const Duration(seconds: 120));
 
     if (res.statusCode != 200) {
       throw Exception("API error");
@@ -19,7 +18,7 @@ class YoutubeApi {
 
   static Future<String?> download(String videoId, String format, String quality) async {
     final res = await http.post(
-      Uri.parse("$_baseUrl/video/download"),
+      Uri.parse("$baseUrl/video/download"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "video_id": videoId,
@@ -37,25 +36,18 @@ class YoutubeApi {
   }
 
   static Future<Map<String, dynamic>> getSettings() async {
-    final res = await http.get(Uri.parse("$_baseUrl/settings"));
+    final res = await http.get(Uri.parse("$baseUrl/settings"));
     if (res.statusCode != 200) {
       throw Exception("Failed to fetch settings");
     }
     return jsonDecode(res.body);
   }
 
-  static Future<bool> updateSettings({
-    required String downloadPath,
-    bool? darkMode,
-    String? character,
-  }) async {
-    final body = <String, dynamic>{'download_path': downloadPath};
-    if (darkMode != null) body['dark_mode'] = darkMode;
-    if (character != null) body['character'] = character;
+  static Future<bool> updateSettings(String downloadPath) async {
     final res = await http.put(
-      Uri.parse("$_baseUrl/settings"),
+      Uri.parse("$baseUrl/settings"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode(body),
+      body: jsonEncode({"download_path": downloadPath}),
     );
     return res.statusCode == 200;
   }

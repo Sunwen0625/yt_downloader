@@ -3,18 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import '../services/youtube_api.dart';
 
 class SettingsScreen extends StatefulWidget {
-  final bool isDarkMode;
-  final ValueChanged<bool> onToggle;
-  final String character;
-  final ValueChanged<String> onCharacterChanged;
-
-  const SettingsScreen({
-    super.key,
-    required this.isDarkMode,
-    required this.onToggle,
-    required this.character,
-    required this.onCharacterChanged,
-  });
+  const SettingsScreen({super.key});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -55,11 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       debugPrint('Picker result: $result');
 
       if (result != null && result.isNotEmpty) {
-        final success = await YoutubeApi.updateSettings(
-          downloadPath: result,
-          darkMode: widget.isDarkMode,
-          character: widget.character,
-        );
+        final success = await YoutubeApi.updateSettings(result);
         if (mounted) {
           if (success) {
             setState(() => _downloadPath = result);
@@ -83,32 +68,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _toggleDarkMode(bool value) async {
-    widget.onToggle(value);
-    if (_downloadPath.isNotEmpty) {
-      await YoutubeApi.updateSettings(
-        downloadPath: _downloadPath,
-        darkMode: value,
-        character: widget.character,
-      );
-    }
-  }
-
-  Future<void> _toggleCharacter(String name) async {
-    widget.onCharacterChanged(name);
-    if (_downloadPath.isNotEmpty) {
-      await YoutubeApi.updateSettings(
-        downloadPath: _downloadPath,
-        darkMode: widget.isDarkMode,
-        character: name,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
       body: _isLoading
@@ -120,59 +81,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: const Text('下載路徑'),
                   subtitle: Text(_downloadPath.isNotEmpty ? _downloadPath : '尚未設定'),
                   onTap: _editDownloadPath,
-                ),
-                const Divider(),
-                ListTile(
-                  leading: Icon(
-                    widget.isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                    color: colorScheme.primary,
-                  ),
-                  title: const Text('黑夜模式'),
-                  trailing: Switch(
-                    value: widget.isDarkMode,
-                    onChanged: _toggleDarkMode,
-                  ),
-                ),
-                const Divider(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Column(
-                    children: [
-                      const Text(
-                        '切換下載角色',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 12),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
-                          'assets/${widget.character}.gif',
-                          width: 120,
-                          height: 120,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ChoiceChip(
-                            label: const Text('星奈'),
-                            selected: widget.character == '星奈',
-                            onSelected: (_) => _toggleCharacter('星奈'),
-                            selectedColor: colorScheme.primaryContainer,
-                          ),
-                          const SizedBox(width: 16),
-                          ChoiceChip(
-                            label: const Text('彩奈'),
-                            selected: widget.character == '彩奈',
-                            onSelected: (_) => _toggleCharacter('彩奈'),
-                            selectedColor: colorScheme.primaryContainer,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
                 ),
                 const Divider(),
                 ListTile(

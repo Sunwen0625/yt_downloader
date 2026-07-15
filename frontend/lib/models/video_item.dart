@@ -8,9 +8,9 @@ class VideoItem {
   List<String> formats;
   List<String> qualities;
 
+
   String selectedFormat;
   String selectedQuality;
-  bool isDownloaded;
 
   VideoItem({
     required this.videoId,
@@ -22,6 +22,5 @@ class VideoItem {
     this.qualities = const ['1080p', '720p', '480p'],
     this.selectedFormat = 'mp4',
     this.selectedQuality = '720p',
-    this.isDownloaded = false,
   });
 }

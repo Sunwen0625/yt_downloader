@@ -5,9 +5,7 @@ import 'home_screen/input_view.dart';
 import 'home_screen/results_view.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String character;
-
-  const HomeScreen({super.key, required this.character});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -17,6 +15,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _urlController = TextEditingController();
   
   List<model.VideoItem> _videos = [];
+  String _playlistTitle = '';
   bool _hasSearched = false;
   bool _isLoading = false;
   final Map<String, double> _downloadingProgress = {};
@@ -30,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final data = await YoutubeApi.getPlaylist(_urlController.text);
 
       setState(() {
+        _playlistTitle = data["playlist_title"]?.toString() ?? "";
         _videos = (data["videos"] as List).map((v) => model.VideoItem(
           videoId: v["id"]?.toString() ?? "",
           title: v["title"]?.toString() ?? "無標題",
@@ -57,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setState(() => _downloadingProgress[videoId] = 0.0);
 
+    // 模擬進度增加
     final progressTimer = Stream.periodic(const Duration(milliseconds: 500), (count) {
       return (count + 1) * 0.05;
     }).takeWhile((p) => p <= 0.9).listen((p) {
@@ -73,10 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
       if (mounted) {
-        setState(() {
-          _downloadingProgress[videoId] = 1.0;
-          video.isDownloaded = true;
-        });
+        setState(() => _downloadingProgress[videoId] = 1.0);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(filename != null ? "下載成功：$filename" : "下載失敗"),
@@ -104,35 +102,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('YouTube 下載器'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         actions: _hasSearched 
           ? [
               IconButton(
                 icon: const Icon(Icons.close),
-                onPressed: () {
-                  setState(() {
-                    _hasSearched = false;
-                    _urlController.clear();
-                    _videos = [];
-                  });
+                  onPressed: () {
+                    setState(() {
+                      _hasSearched = false;
+                      _urlController.clear();
+                      _videos = [];
+                      _playlistTitle = '';
+                    });
                 },
               )
             ]
           : null,
       ),
       body: _isLoading 
-          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
+          ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
           : _hasSearched 
               ? HomeResultsView(
                   url: _urlController.text,
+                  playlistTitle: _playlistTitle,
                   videos: _videos,
                   downloadingProgress: _downloadingProgress,
                   onDownload: _handleDownload,
-                  character: widget.character,
                 ) 
               : HomeInputView(
                   controller: _urlController,

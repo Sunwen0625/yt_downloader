@@ -40,6 +40,13 @@ class BackendManager {
   Future<void> _spawnBackend() async {
     if (_backendProcess != null) return;
 
+    final exePath = _findBackendExecutable();
+    if (exePath != null) {
+      debugPrint('[Backend] Starting backend executable: $exePath');
+      await _tryStartExecutable(exePath);
+      if (_backendProcess != null) return;
+    }
+
     final backendDir = _findBackendDir();
     if (backendDir == null) {
       debugPrint('[Backend] Could not locate backend directory.');
@@ -67,6 +74,48 @@ class BackendManager {
       if (_backendProcess != null) return;
 
       await _tryStart(backendDir, 'python3', ['-m', 'uvicorn', 'main:app', '--host', defaultHost, '--port', '$defaultPort']);
+    }
+  }
+
+  String? _findBackendExecutable() {
+    final exeName = Platform.isWindows ? 'yt-downloader-backend.exe' : 'yt-downloader-backend';
+    final scriptDir = Directory.current.path;
+
+    final candidates = [
+      '$scriptDir/$exeName',
+      '${scriptDir}/../dist/yt-downloader-win64/$exeName',
+      '${scriptDir}/../../dist/yt-downloader-win64/$exeName',
+      '../backend/dist/$exeName',
+      '${scriptDir}/backend/dist/$exeName',
+      '${scriptDir}/../backend/dist/$exeName',
+    ];
+
+    for (final p in candidates) {
+      final file = File(p);
+      if (file.existsSync()) {
+        return file.resolveSymbolicLinksSync();
+      }
+    }
+    return null;
+  }
+
+  Future<void> _tryStartExecutable(String exePath) async {
+    try {
+      final exeDir = Directory(exePath).parent;
+      final process = await Process.start(exePath, [], workingDirectory: exeDir.path, runInShell: false);
+      process.stdout.transform(utf8.decoder).listen((data) => debugPrint('[Backend:out] $data'));
+      process.stderr.transform(utf8.decoder).listen((data) => debugPrint('[Backend:err] $data'));
+      process.exitCode.then((code) {
+        debugPrint('[Backend] Process exited with code $code');
+        if (_backendProcess == process) {
+          _backendProcess = null;
+          _ready = false;
+        }
+      });
+      _backendProcess = process;
+      debugPrint('[Backend] Started executable: $exePath');
+    } catch (e) {
+      debugPrint('[Backend] Failed to start executable: $exePath (${e.runtimeType}: $e)');
     }
   }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -13,6 +14,7 @@ class BackendManager {
 
   bool _ready = false;
   Timer? _healthTimer;
+  Process? _backendProcess;
 
   String get host => defaultHost;
   int get port => defaultPort;
@@ -22,10 +24,6 @@ class BackendManager {
   final _readyController = StreamController<bool>.broadcast();
   Stream<bool> get onReady => _readyController.stream;
 
-  /// Try to connect to the backend. If running in dev mode (started
-  /// manually by the user or via the launcher batch file), the backend
-  /// will already be listening. In production, the launcher batch file
-  /// starts the backend before opening the Flutter window.
   Future<void> start() async {
     if (_ready) return;
 
@@ -34,8 +32,80 @@ class BackendManager {
       return;
     }
 
-    // Backend not ready yet; poll in background
+    await _spawnBackend();
+
     _beginBackgroundCheck();
+  }
+
+  Future<void> _spawnBackend() async {
+    if (_backendProcess != null) return;
+
+    final backendDir = _findBackendDir();
+    if (backendDir == null) {
+      debugPrint('[Backend] Could not locate backend directory.');
+      return;
+    }
+
+    debugPrint('[Backend] Starting backend from: ${backendDir.path}');
+
+    if (Platform.isWindows) {
+      await _tryStart(backendDir, 'poetry', ['run', 'uvicorn', 'main:app', '--host', defaultHost, '--port', '$defaultPort']);
+      if (_backendProcess != null) return;
+
+      final venvUvicorn = '${backendDir.path}\\.venv\\Scripts\\uvicorn.exe';
+      if (File(venvUvicorn).existsSync()) {
+        await _tryStart(backendDir, venvUvicorn, ['main:app', '--host', defaultHost, '--port', '$defaultPort']);
+        if (_backendProcess != null) return;
+      }
+
+      await _tryStart(backendDir, 'uvicorn', ['main:app', '--host', defaultHost, '--port', '$defaultPort']);
+    } else {
+      await _tryStart(backendDir, 'poetry', ['run', 'uvicorn', 'main:app', '--host', defaultHost, '--port', '$defaultPort']);
+      if (_backendProcess != null) return;
+
+      await _tryStart(backendDir, 'uvicorn', ['main:app', '--host', defaultHost, '--port', '$defaultPort']);
+      if (_backendProcess != null) return;
+
+      await _tryStart(backendDir, 'python3', ['-m', 'uvicorn', 'main:app', '--host', defaultHost, '--port', '$defaultPort']);
+    }
+  }
+
+  Future<void> _tryStart(Directory wd, String cmd, List<String> args) async {
+    try {
+      final process = await Process.start(cmd, args, workingDirectory: wd.path, runInShell: Platform.isWindows);
+      process.stdout.transform(utf8.decoder).listen((data) => debugPrint('[Backend:out] $data'));
+      process.stderr.transform(utf8.decoder).listen((data) => debugPrint('[Backend:err] $data'));
+      process.exitCode.then((code) {
+        debugPrint('[Backend] Process exited with code $code');
+        if (_backendProcess == process) {
+          _backendProcess = null;
+          _ready = false;
+        }
+      });
+      _backendProcess = process;
+      debugPrint('[Backend] Started: $cmd ${args.join(' ')}');
+    } catch (e) {
+      debugPrint('[Backend] Failed: $cmd (${e.runtimeType}: $e)');
+    }
+  }
+
+  Directory? _findBackendDir() {
+    final scriptPath = Platform.script.toFilePath();
+    final dirs = [
+      Directory('${Directory.current.path}/../backend'),
+      Directory('${scriptPath}/../../backend'),
+      Directory('${scriptPath}/../backend'),
+      Directory('../backend'),
+      Directory('backend'),
+    ];
+
+    for (final d in dirs) {
+      if (d.existsSync()) {
+        final mainPy = File('${d.path}/main.py');
+        if (mainPy.existsSync()) return d;
+      }
+    }
+    return null;
   }
 
   void _beginBackgroundCheck() {
@@ -58,13 +128,30 @@ class BackendManager {
   Future<void> stop() async {
     _healthTimer?.cancel();
     _ready = false;
+    await _killProcess();
+  }
+
+  Future<void> shutdown() async {
+    _healthTimer?.cancel();
+    _ready = false;
+    try {
+      await http.post(Uri.parse('$baseUrl/shutdown')).timeout(const Duration(seconds: 1));
+    } catch (e) {
+      debugPrint('[Backend] Shutdown request failed: $e');
+    }
+    await _killProcess();
+  }
+
+  Future<void> _killProcess() async {
+    if (_backendProcess != null) {
+      _backendProcess?.kill();
+      _backendProcess = null;
+    }
   }
 
   Future<bool> _healthCheck() async {
     try {
-      final res = await http
-          .get(Uri.parse('$baseUrl/settings'))
-          .timeout(const Duration(seconds: 2));
+      final res = await http.get(Uri.parse('$baseUrl/settings')).timeout(const Duration(seconds: 2));
       return res.statusCode == 200;
     } catch (_) {
       return false;
@@ -74,5 +161,6 @@ class BackendManager {
   void dispose() {
     _healthTimer?.cancel();
     _readyController.close();
+    _killProcess();
   }
 }

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'app.dart';
-import 'dart:io';
 import 'services/backend_manager.dart';
+import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 如果是桌面平台，設置視窗初始化大小與限制
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     await windowManager.ensureInitialized();
 
@@ -25,6 +24,8 @@ void main() async {
       await windowManager.show();
       await windowManager.focus();
     });
+
+    await windowManager.setPreventClose(true);
   }
 
   BackendManager().start();

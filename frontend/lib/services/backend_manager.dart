@@ -193,7 +193,8 @@ class BackendManager {
 
   Future<void> _killProcess() async {
     if (_backendProcess != null) {
-      _backendProcess?.kill();
+      _backendProcess!.kill();
+      await _backendProcess!.exitCode;
       _backendProcess = null;
     }
   }

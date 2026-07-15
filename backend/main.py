@@ -1,4 +1,5 @@
 import os
+import threading
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -100,7 +101,8 @@ def update_settings(data: dict):
 
 @app.post('/shutdown')
 def shutdown():
-    os._exit(0)
+    threading.Timer(0.1, lambda: os._exit(0)).start()
+    return {'status': 'shutting_down'}
 
 
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'app.dart';
-import 'services/backend_manager.dart';
 import 'dart:io';
+import 'services/backend_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,13 +25,9 @@ void main() async {
       await windowManager.show();
       await windowManager.focus();
     });
-
-    // 攔截關閉事件，以便通知後端也關閉
-    await windowManager.setPreventClose(true);
   }
 
-  runApp(const YTDownloaderApp());
-
-  // 在背景偵測後端連線（Launcher 已先啟動後端）
   BackendManager().start();
+
+  runApp(const YTDownloaderApp());
 }

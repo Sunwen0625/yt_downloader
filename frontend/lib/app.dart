@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:window_manager/window_manager.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
@@ -13,7 +15,7 @@ class YTDownloaderApp extends StatefulWidget {
   State<YTDownloaderApp> createState() => _YTDownloaderAppState();
 }
 
-class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingObserver {
+class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingObserver, WindowListener {
   int _currentIndex = 0;
   ThemeMode _themeMode = ThemeMode.light;
   String _character = '星奈';
@@ -24,6 +26,9 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingOb
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      windowManager.addListener(this);
+    }
 
     // Listen for backend readiness
     _backendSub = BackendManager().onReady.listen((ready) {
@@ -40,8 +45,19 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingOb
   @override
   void dispose() {
     _backendSub?.cancel();
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      windowManager.removeListener(this);
+    }
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void onWindowClose() async {
+    // Send shutdown signal to backend before closing
+    await BackendManager().shutdown();
+    // Then truly close the app
+    await windowManager.destroy();
   }
 
   @override

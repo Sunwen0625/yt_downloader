@@ -1,4 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist-packages/
+*.egg
+
+# Virtual environments
 .venv
-.vscode
-__pycache__
+venv
 venv_linux
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PyInstaller
+backend/build/
+backend/dist/
+
+# Flutter/Dart
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.fvm/
+frontend/.idea/
+frontend/*.iml
+frontend/flutter_*.log
+frontend/.packages
+frontend/.pub-cache/
+frontend/.pub/
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/android/gradle/wrapper/gradle-wrapper.jar
+frontend/android/gradlew
+frontend/android/gradlew.bat
+frontend/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+frontend/ios/Pods/
+frontend/ios/Flutter/ephemeral/
+frontend/ios/Flutter/flutter_export_environment.sh
+frontend/macos/Flutter/ephemeral/
+frontend/linux/flutter/ephemeral/
+frontend/windows/flutter/ephemeral/
+
+# App release build
+dist/
+
+# Archives
+*.rar
+*.zip
+*.tar.gz
+*.7z
+
+# Config with potential secrets
+backend/config.json
+
+# OS
+.DS_Store
+Thumbs.db

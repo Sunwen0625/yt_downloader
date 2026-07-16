@@ -30,6 +30,10 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
 
+      - name: Regenerate lock file
+        run: poetry lock
+        working-directory: backend
+
       - name: Install dependencies
         run: poetry install
         working-directory: backend

@@ -13,9 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            target: linux
-            ext: ""
           - os: windows-latest
             target: windows
             ext: ".exe"
@@ -32,6 +29,10 @@ jobs:
 
       - name: Install Poetry
         run: pip install poetry
+
+      - name: Regenerate lock file
+        run: poetry lock
+        working-directory: backend
 
       - name: Install dependencies
         run: poetry install
@@ -51,30 +52,6 @@ jobs:
         with:
           name: yt-downloader-backend-${{ matrix.target }}
           path: backend/dist/yt-downloader-backend${{ matrix.ext }}
-
-  build-frontend-linux:
-    name: Build Frontend (Linux)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.44.2"
-          channel: stable
-
-      - name: Build Linux
-        run: |
-          flutter config --enable-linux-desktop
-          flutter build linux --release
-        working-directory: frontend
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: yt-downloader-frontend-linux
-          path: frontend/build/linux/x64/release/bundle/
 
   build-frontend-windows:
     name: Build Frontend (Windows)
@@ -100,7 +77,7 @@ jobs:
 
   create-release:
     name: Create Release
-    needs: [build-backend, build-frontend-linux, build-frontend-windows]
+    needs: [build-backend, build-frontend-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -109,15 +86,6 @@ jobs:
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
-
-      - name: Create release archive - Linux
-        run: |
-          mkdir -p release/linux
-          cp -r yt-downloader-frontend-linux/* release/linux/
-          cp yt-downloader-backend-linux/yt-downloader-backend release/linux/
-          cp scripts/run.sh release/linux/
-          chmod +x release/linux/run.sh
-          cd release && tar czf yt-downloader-linux.tar.gz linux/
 
       - name: Create release archive - Windows
         run: |
@@ -136,17 +104,15 @@ jobs:
 
             ### 下載
 
-            請選擇對應平台的壓縮檔：
-            - `yt-downloader-linux.tar.gz` — Linux 版本
+            請下載壓縮檔：
             - `yt-downloader-windows.zip` — Windows 版本
 
             ### 如何使用
 
-            1. 解壓縮對應平台的檔案
-            2. 執行 `run.sh`（Linux）或 `run.bat`（Windows）
+            1. 解壓縮檔案
+            2. 執行 `run.bat`
             3. 腳本會自動啟動後端服務與前端介面
 
             > 首次執行前請確保已安裝 [Python](https://www.python.org/) 3.11+ 與 [Flutter](https://flutter.dev/) SDK。
           files: |
-            release/yt-downloader-linux.tar.gz
             release/yt-downloader-windows.zip

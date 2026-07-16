@@ -177,26 +177,23 @@ class BackendManager {
   Future<void> stop() async {
     _healthTimer?.cancel();
     _ready = false;
-    await _killProcess();
+    _killProcess();
   }
 
   Future<void> shutdown() async {
     _healthTimer?.cancel();
     _ready = false;
     try {
-      await http.post(Uri.parse('$baseUrl/shutdown')).timeout(const Duration(seconds: 1));
+      await http.post(Uri.parse('$baseUrl/shutdown')).timeout(const Duration(milliseconds: 300));
     } catch (e) {
       debugPrint('[Backend] Shutdown request failed: $e');
     }
-    await _killProcess();
+    _killProcess();
   }
 
-  Future<void> _killProcess() async {
-    if (_backendProcess != null) {
-      _backendProcess!.kill();
-      await _backendProcess!.exitCode;
-      _backendProcess = null;
-    }
+  void _killProcess() {
+    _backendProcess?.kill();
+    _backendProcess = null;
   }
 
   Future<bool> _healthCheck() async {

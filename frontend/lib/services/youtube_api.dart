@@ -4,7 +4,7 @@ import 'backend_manager.dart';
 
 class YoutubeApi {
   static String get _baseUrl => BackendManager().baseUrl;
-
+  //取得撥放頁表的清單並解析json資料
   static Future<Map<String, dynamic>> getPlaylist(String url) async {
     final res = await http.get(
       Uri.parse("$_baseUrl/playlist?url=${Uri.encodeComponent(url)}"),
@@ -16,7 +16,7 @@ class YoutubeApi {
 
     return jsonDecode(res.body);
   }
-
+  //解析影片資訊
   static Future<String?> download(String videoId, String format, String quality) async {
     final res = await http.post(
       Uri.parse("$_baseUrl/video/download"),
@@ -35,7 +35,7 @@ class YoutubeApi {
     final data = jsonDecode(res.body);
     return data["success"] == true ? data["filename"] : null;
   }
-
+  //取得設定
   static Future<Map<String, dynamic>> getSettings() async {
     final res = await http.get(Uri.parse("$_baseUrl/settings"));
     if (res.statusCode != 200) {
@@ -43,7 +43,7 @@ class YoutubeApi {
     }
     return jsonDecode(res.body);
   }
-
+  //更新設定
   static Future<bool> updateSettings({
     required String downloadPath,
     bool? darkMode,

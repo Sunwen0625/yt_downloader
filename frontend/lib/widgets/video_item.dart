@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import '../models/video_item.dart' as model;
 
 class VideoItem extends StatefulWidget {
+  //定義了 VideoItem 的屬性，包括視頻對象、下載狀態、下載進度、下載回調函數和角色名稱
   final model.VideoItem video;
   final bool isDownloading;
   final double downloadProgress;
   final Function(String format, String quality) onDownload;
   final String character;
-
+  //構造函數，初始化 VideoItem 的屬性
   const VideoItem({
     super.key,
     required this.video,
@@ -200,7 +201,7 @@ class _VideoItemState extends State<VideoItem> {
       ),
     );
   }
-
+  //建構下拉選單
   Widget _buildDropdown({
     required String value,
     required List<String> items,

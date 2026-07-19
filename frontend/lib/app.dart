@@ -25,18 +25,25 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingOb
   @override
   void initState() {
     super.initState();
+    // 註冊生命週期監聽
     WidgetsBinding.instance.addObserver(this);
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      // 註冊視窗監聽
       windowManager.addListener(this);
     }
 
+    //訂閱後端狀態的 Stream，當後端從「未就緒」變為「就緒」時會觸發
     _backendSub = BackendManager().onReady.listen((ready) {
+      //檢查後端是否已就緒，並確保當前 Widget 仍存在於畫面樹中
       if (ready && mounted) {
         setState(() => _backendReady = true);
         _loadSettings();
       }
     });
 
+    // 檢查當前狀態（處理「訂閱發生前，後端其實已經就緒」的邊緣情況）
+    // 因為監聽器只會收到「變化」的訊號，如果不做這個檢查，
+    // 若後端在畫面載入前就已經準備好了，UI 可能永遠不會切換成「就緒」狀態。
     if (BackendManager().isReady) {
       _backendReady = true;
       _loadSettings();
@@ -49,17 +56,22 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingOb
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       windowManager.removeListener(this);
     }
+    // 移除，避免記憶體洩漏
     WidgetsBinding.instance.removeObserver(this);
     BackendManager().dispose();
     super.dispose();
   }
 
+  //關閉視窗
   @override
   void onWindowClose() async {
+    //先傳輸關閉訊號給後端
     await BackendManager().shutdown();
+    //再關閉應用程式
     exit(0);
   }
 
+  //生命週期死亡時，關閉後端
   @override
   void didChangeAppLifecycleState(AppLifecycleState state)async{
     if (state == AppLifecycleState.detached) {
@@ -78,7 +90,7 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingOb
       }
     } catch (_) {}
   }
-
+  //從後端的介面的配置，設置狀態
   void _onToggleTheme(bool isDark) {
     setState(() => _themeMode = isDark ? ThemeMode.dark : ThemeMode.light);
   }
@@ -99,6 +111,7 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingOb
     );
   }
 
+  //轉圈元件，後端尚未就緒時顯示
   Widget _loadingScreen() {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -118,6 +131,7 @@ class _YTDownloaderAppState extends State<YTDownloaderApp> with WidgetsBindingOb
     );
   }
 
+  //主畫面
   Widget _mainScaffold() {
     return Scaffold(
       body: IndexedStack(

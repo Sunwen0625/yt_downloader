@@ -17,6 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _urlController = TextEditingController();
   
   List<model.VideoItem> _videos = [];
+  //區分兩個畫面，一個是搜尋 一個是結果
   bool _hasSearched = false;
   bool _isLoading = false;
   final Map<String, double> _downloadingProgress = {};
@@ -27,9 +28,11 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoading = true);
 
     try {
+      //從文字攔的文字發送api請求影片列表
       final data = await YoutubeApi.getPlaylist(_urlController.text);
 
       setState(() {
+        //將返回的影片列表轉換為 VideoItem 對象，並更新狀態
         _videos = (data["videos"] as List).map((v) => model.VideoItem(
           videoId: v["id"]?.toString() ?? "",
           title: v["title"]?.toString() ?? "無標題",
@@ -41,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     } catch (e) {
       print(e);
+      //顯示錯誤訊息在底下
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("解析失敗，請檢查網址是否正確")),
       );
@@ -56,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (videoId.isEmpty) return;
 
     setState(() => _downloadingProgress[videoId] = 0.0);
-
+    //模擬下載進度
     final progressTimer = Stream.periodic(const Duration(milliseconds: 500), (count) {
       return (count + 1) * 0.05;
     }).takeWhile((p) => p <= 0.9).listen((p) {
